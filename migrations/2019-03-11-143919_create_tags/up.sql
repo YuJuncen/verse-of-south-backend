@@ -3,17 +3,17 @@
 CREATE TABLE tags (
     tag_name VARCHAR 
         NOT NULL ,
-    ID SERIAL 
+    id SERIAL
         PRIMARY KEY
 );
 
 CREATE TABLE tag_to (
-    ID SERIAL
+    id SERIAL
         PRIMARY KEY, 
-    the_tag INTEGER REFERENCES tags(ID) 
+    the_tag INTEGER REFERENCES tags(id)
         ON DELETE CASCADE
         NOT NULL,
-    the_post INTEGER REFERENCES posts(ID)
+    the_post INTEGER REFERENCES posts(id)
         ON DELETE CASCADE
         NOT NULL
 );

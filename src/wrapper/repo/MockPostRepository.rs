@@ -1,20 +1,34 @@
-use std::vec::Vec;
+use std::vec::*;
 use std::time::Instant;
-use verse_of_south_backend::database::models::{ Post, FormatType };
+use vos::database::models::{ Post, NewPost, FormatType };
+use std::any::Any;
 
 pub struct MockPostRepository {
-    mockItems: <Post> = vec![Post {
-        id: 0,
-        title: "Hello, world!",
-        intro: Option::None,
-        publish_time: Instant::now(),
-        body: "# Hello!  \nKokowa verse of south!",
-        body_format: FormatType::Markdown
-    }]
+    mock_items: Vec<Post>
 }
 
-impl PostRepository for MockPostRepository {
-    fn getById(&self, ID: i32) {
-        return self.mockItems.find()
+impl Repository for MockPostRepository {
+    type Entity = Post;
+    type NewEntity = NewPost;
+    type Key = i32;
+
+    fn get_by_id(&mut self, id: i32) -> Option<Post> {
+        self.sample.iter().find(|p| p.id == id)
+    }
+
+
+}
+
+impl MockPostRepository {
+    pub fn new() -> MockPostRepository {
+        let sample = vec![Post {
+            id: 0,
+            title: "Hello, world!",
+            intro: Option::None,
+            publish_time: Instant::now(),
+            body: "# Hello!  \nKokowa verse of south!",
+            body_format: FormatType::Markdown
+        }];
+        MockPostRepository {mock_items : sample}
     }
 }

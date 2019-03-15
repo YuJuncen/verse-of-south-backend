@@ -1,9 +1,10 @@
-use std::time::Instant;
+use std::time::{Instant, SystemTime};
 use std::io;
 use diesel::sql_types::*;
 use diesel::backend::Backend;
 use diesel::deserialize::{self, FromSql};
 use diesel::serialize::{self, ToSql, Output};
+use chrono::{NaiveDateTime, Utc};
 use crate::schema::posts;
 
 #[derive(Debug, Eq, PartialEq, AsExpression, FromSqlRow)]
@@ -43,9 +44,9 @@ impl <DB: Backend> FromSql<SmallInt, DB> for FormatType
 #[derive(Queryable, Debug, Eq, PartialEq)]
 pub struct Post {
     pub id: i32 ,  
+    pub publish_time: NaiveDateTime,
     pub title: String ,
     pub intro: Option<String> ,
-    pub publish_time: Instant ,
     pub body: String ,
     pub body_format: FormatType ,
 }

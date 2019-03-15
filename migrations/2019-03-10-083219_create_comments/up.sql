@@ -1,8 +1,8 @@
 -- Your SQL goes here
 
 CREATE TABLE comments (
-  ID SERIAL PRIMARY KEY ,
-  publish_time TIMESTAMP WITH TIME ZONE
+  id SERIAL PRIMARY KEY ,
+  publish_time TIMESTAMP
     NOT NULL
     DEFAULT now(),
   content TEXT NOT NULL ,
@@ -10,5 +10,5 @@ CREATE TABLE comments (
   publisher INTEGER
     REFERENCES readers(IP),
   is_for INTEGER
-    REFERENCES posts(ID)
+    REFERENCES posts(id)
 )

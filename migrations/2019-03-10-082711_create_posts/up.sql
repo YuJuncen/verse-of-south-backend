@@ -3,10 +3,10 @@
 * each relation maps to one post.
 */
 CREATE TABLE posts(
-  ID SERIAL
+  id SERIAL
     PRIMARY KEY,
 
-  publish_time TIMESTAMP WITH TIME ZONE
+  publish_time TIMESTAMP
     NOT NULL
     DEFAULT now(),
 

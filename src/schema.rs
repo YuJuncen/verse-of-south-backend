@@ -1,7 +1,7 @@
 table! {
     comments (id) {
         id -> Int4,
-        publish_time -> Timestamptz,
+        publish_time -> Timestamp,
         content -> Text,
         publisher_name -> Varchar,
         publisher -> Nullable<Int4>,
@@ -12,7 +12,7 @@ table! {
 table! {
     posts (id) {
         id -> Int4,
-        publish_time -> Timestamptz,
+        publish_time -> Timestamp,
         title -> Varchar,
         intro -> Nullable<Text>,
         body -> Text,
@@ -27,17 +27,17 @@ table! {
 }
 
 table! {
-    tag_to (id) {
+    tags (id) {
+        tag_name -> Varchar,
         id -> Int4,
-        the_tag -> Int4,
-        the_post -> Int4,
     }
 }
 
 table! {
-    tags (id) {
-        tag_name -> Varchar,
+    tag_to (id) {
         id -> Int4,
+        the_tag -> Int4,
+        the_post -> Int4,
     }
 }
 
@@ -50,6 +50,6 @@ allow_tables_to_appear_in_same_query!(
     comments,
     posts,
     readers,
-    tag_to,
     tags,
+    tag_to,
 );

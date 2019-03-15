@@ -1,6 +1,7 @@
-use std::time::Instant;
 use vos::database::models::post::{ NewPost, Post, FormatType };
 use vos::database;
+use std::time::SystemTime;
+use chrono::prelude::*;
 use diesel::prelude::*;
 fn main() {
     use vos::schema::posts::dsl::*;
@@ -8,7 +9,7 @@ fn main() {
         id: 0,
         title: String::from("Hello, world!"),
         intro: Option::None,
-        publish_time: Instant::now(),
+        publish_time: Utc::now().naive_utc(),
         body: String::from("# Hello!  \nKokowa verse of south!"),
         body_format: FormatType::Markdown
     };
@@ -16,7 +17,7 @@ fn main() {
     let conn = database::establish_connection();
     let res = diesel::insert_into(posts)
         .values(&np)
-        .execute(&conn);
+        .get_result::<Post>(&conn);
         
-    println!("{:?} //\n {:?}// \n {:?}", post, np, conn.execute("SELECT 1;"));
+    println!("{:?} //\n {:?}// \n {:?}", post, np, res);
 }
