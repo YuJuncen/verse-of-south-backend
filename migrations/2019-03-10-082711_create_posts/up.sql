@@ -1,6 +1,4 @@
--- Your SQL goes here
-
-
+CREATE TYPE format AS ENUM ('Markdown', 'HTML', 'PlainText', 'WriteDone');
 /**
 * The post table.
 * each relation maps to one post.
@@ -16,18 +14,12 @@ CREATE TABLE posts(
   title VARCHAR
     NOT NULL ,
 
-  intro TEXT
-);
+  intro TEXT ,
 
-/**
- * the content of a post.
- * stands for the body and some huge data that should not be displayed in the index page.
- * it is a weak entity.
- */
-CREATE TABLE post_contents (
-   is_for INTEGER
-     REFERENCES posts(ID) ON DELETE CASCADE
-     NOT NULL
-     PRIMARY KEY ,
-   body TEXT NOT NULL
+  body TEXT 
+    NOT NULL ,
+
+  body_format format
+    NOT NULL 
+    DEFAULT 'Markdown'
 );

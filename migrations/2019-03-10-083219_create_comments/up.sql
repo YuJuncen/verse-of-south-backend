@@ -3,6 +3,7 @@
 CREATE TABLE comments (
   ID SERIAL PRIMARY KEY ,
   publish_time TIMESTAMP WITH TIME ZONE
+    NOT NULL
     DEFAULT now(),
   content TEXT NOT NULL ,
   publisher_name VARCHAR NOT NULL ,

@@ -1,4 +1,3 @@
 -- This file should undo anything in `up.sql`
-
-DROP TABLE posts;
-DROP TYPE format;
+DROP TABLE tag_to;
+DROP TABLE tags;
