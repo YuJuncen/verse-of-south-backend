@@ -1,6 +1,3 @@
--- Your SQL goes here
-
-
 /**
 * The post table.
 * each relation maps to one post.
@@ -16,18 +13,23 @@ CREATE TABLE posts(
   title VARCHAR
     NOT NULL ,
 
-  intro TEXT
-);
+  intro TEXT ,
 
-/**
- * the content of a post.
- * stands for the body and some huge data that should not be displayed in the index page.
- * it is a weak entity.
- */
-CREATE TABLE post_contents (
-   is_for INTEGER
-     REFERENCES posts(ID) ON DELETE CASCADE
-     NOT NULL
-     PRIMARY KEY ,
-   body TEXT NOT NULL
+  body TEXT 
+    NOT NULL ,
+
+  /**
+  * Diesel seems not support custom type in SQL.
+  * Using SMALLINT to present format type.
+  * Where WriteDone is a markup language made for 
+  *   literature writing by me.
+  * ENUM TYPE
+  * 1 : MARKDOWN
+  * 2 : HTML
+  * 3 : PlainText
+  * 4 : WriteDone
+  */
+  body_format SMALLINT
+    NOT NULL 
+    DEFAULT 1
 );

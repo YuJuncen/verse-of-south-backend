@@ -1,0 +1,14 @@
+[package]
+name = "vos"
+version = "0.1.1"
+authors = ["hillium <maruruku@stu.csust.edu.cn>"]
+edition = "2018"
+
+[dependencies]
+actix-web = "0.7"
+actix = "0.7.9"
+diesel = { version = "1.4", features = ["postgres", "chrono"]}
+tokio = "0.1"
+futures = "0.1"
+dotenv = "0.13"
+chrono = "0.4"
