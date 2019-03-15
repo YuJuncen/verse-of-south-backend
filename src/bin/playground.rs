@@ -1,15 +1,22 @@
 use std::time::Instant;
-use verse_of_south_backend::database::models::post::{ Post, FormatType };
+use vos::database::models::post::{ NewPost, Post, FormatType };
+use vos::database;
 use diesel::prelude::*;
-use verse_of_south_backend::schema::posts::dsl::*;
 fn main() {
+    use vos::schema::posts::dsl::*;
     let post = Post {
         id: 0,
-        title: "Hello, world!",
+        title: String::from("Hello, world!"),
         intro: Option::None,
         publish_time: Instant::now(),
-        body: "# Hello!  \nKokowa verse of south!",
+        body: String::from("# Hello!  \nKokowa verse of south!"),
         body_format: FormatType::Markdown
     };
-    println!("{:?}", post)
+    let np = NewPost::new("Hi!", "新的冒险要开始了！", None);
+    let conn = database::establish_connection();
+    let res = diesel::insert_into(posts)
+        .values(&np)
+        .execute(&conn);
+        
+    println!("{:?} //\n {:?}// \n {:?}", post, np, conn.execute("SELECT 1;"));
 }

@@ -1,4 +1,3 @@
-CREATE TYPE format AS ENUM ('Markdown', 'HTML', 'PlainText', 'WriteDone');
 /**
 * The post table.
 * each relation maps to one post.
@@ -19,7 +18,18 @@ CREATE TABLE posts(
   body TEXT 
     NOT NULL ,
 
-  body_format format
+  /**
+  * Diesel seems not support custom type in SQL.
+  * Using SMALLINT to present format type.
+  * Where WriteDone is a markup language made for 
+  *   literature writing by me.
+  * ENUM TYPE
+  * 1 : MARKDOWN
+  * 2 : HTML
+  * 3 : PlainText
+  * 4 : WriteDone
+  */
+  body_format SMALLINT
     NOT NULL 
-    DEFAULT 'Markdown'
+    DEFAULT 1
 );
