@@ -1,6 +1,6 @@
 use std::vec::*;
 use std::time::Instant;
-use super::models::{ Post, NewPost, FormatType };
+use crate::database::models::{ Post, NewPost, FormatType };
 use std::any::Any;
 
 pub struct MockPostRepository {

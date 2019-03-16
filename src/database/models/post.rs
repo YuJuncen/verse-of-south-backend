@@ -1,60 +1,8 @@
-use std::io;
-use diesel::sql_types::*;
-use diesel::backend::Backend;
-use diesel::deserialize::{self, FromSql};
-use diesel::serialize::{self, ToSql, Output};
 use chrono::{NaiveDateTime};
-use diesel::pg::PgConnection;
+use super::types::FormatType;
 use crate::schema::posts;
+use diesel::pg::PgConnection;
 use super::tag::{Tag, TagTo };
-
-#[derive(Debug, Eq, PartialEq, AsExpression, FromSqlRow)]
-#[sql_type = "SmallInt"]
-pub enum FormatType {
-    Markdown, HTML, PlainText, WriteDone
-}
-
-impl <DB: Backend> ToSql<SmallInt, DB> for FormatType
-    where i16: ToSql<SmallInt, DB>,
-{
-    fn to_sql<W: io::Write>(&self, out : &mut Output<W, DB>) -> serialize::Result {
-        let v = match *self {
-            FormatType::Markdown  => 1,
-            FormatType::HTML      => 2,
-            FormatType::PlainText => 3,
-            FormatType::WriteDone => 4,
-        };
-        v.to_sql(out)
-    }
-}
-
-impl <DB: Backend> FromSql<SmallInt, DB> for FormatType 
-    where i16: FromSql<SmallInt, DB>, {
-    fn from_sql(bytes: Option<&DB::RawValue>) -> deserialize::Result<Self> {
-        let v = i16::from_sql(bytes)?;
-        Ok(match v {
-            1 => FormatType::Markdown,
-            2 => FormatType::HTML,
-            3 => FormatType::PlainText,
-            4 => FormatType::WriteDone,
-            _ => unreachable!()
-        })
-    }
-}
-
-impl Post {
-    pub fn get_tags(&self, conn: &PgConnection) -> Vec<Tag> {
-        use diesel::pg::expression::dsl::any;
-        use crate::schema::{ tags, tag_to };
-        use diesel::prelude::*;
-
-        let post_tag_ids = TagTo::belonging_to(self).select(tag_to::tag_id);
-
-        tags::table.filter(tags::id.eq(any(post_tag_ids)))
-            .load::<Tag>(conn)
-            .expect("failed to load tags")
-    }
-}
 
 #[derive(Identifiable, Queryable, Debug, Eq, PartialEq)]
 pub struct Post {
@@ -79,5 +27,23 @@ impl<'a> NewPost<'a> {
         NewPost {
             title, intro, body
         }
+    }
+}
+
+impl Post {
+    pub fn get_tags(&self, conn: &PgConnection) -> Vec<Tag> {
+        use diesel::pg::expression::dsl::any;
+        use crate::schema::{ tags, tag_to };
+        use diesel::prelude::*;
+
+        let post_tag_ids = TagTo::belonging_to(self).select(tag_to::tag_id);
+
+        tags::table.filter(tags::id.eq(any(post_tag_ids)))
+            .load::<Tag>(conn)
+            .expect("failed to load tags")
+    }
+
+    pub fn attach_tags(tags: Vec<Tag>) {
+        
     }
 }

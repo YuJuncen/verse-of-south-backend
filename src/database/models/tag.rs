@@ -1,6 +1,7 @@
 use crate::schema::{tags, tag_to};
 use super::post::Post;
 
+
 #[table_name = "tags"]
 #[derive(Identifiable, Queryable, Eq, PartialEq, Debug)]
 pub struct Tag {

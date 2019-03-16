@@ -2,6 +2,7 @@
 
 pub mod models;
 
+
 use diesel::prelude::*;
 use diesel::pg::PgConnection;
 use dotenv::dotenv;
