@@ -1,11 +1,12 @@
-use std::time::{Instant, SystemTime};
 use std::io;
 use diesel::sql_types::*;
 use diesel::backend::Backend;
 use diesel::deserialize::{self, FromSql};
 use diesel::serialize::{self, ToSql, Output};
-use chrono::{NaiveDateTime, Utc};
+use chrono::{NaiveDateTime};
+use diesel::pg::PgConnection;
 use crate::schema::posts;
+use super::tag::{Tag, TagTo };
 
 #[derive(Debug, Eq, PartialEq, AsExpression, FromSqlRow)]
 #[sql_type = "SmallInt"]
@@ -41,7 +42,21 @@ impl <DB: Backend> FromSql<SmallInt, DB> for FormatType
     }
 }
 
-#[derive(Queryable, Debug, Eq, PartialEq)]
+impl Post {
+    pub fn get_tags(&self, conn: &PgConnection) -> Vec<Tag> {
+        use diesel::pg::expression::dsl::any;
+        use crate::schema::{ tags, tag_to };
+        use diesel::prelude::*;
+
+        let post_tag_ids = TagTo::belonging_to(self).select(tag_to::tag_id);
+
+        tags::table.filter(tags::id.eq(any(post_tag_ids)))
+            .load::<Tag>(conn)
+            .expect("failed to load tags")
+    }
+}
+
+#[derive(Identifiable, Queryable, Debug, Eq, PartialEq)]
 pub struct Post {
     pub id: i32 ,  
     pub publish_time: NaiveDateTime,

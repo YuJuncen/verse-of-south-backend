@@ -1,8 +1,15 @@
+use std::hash::Hash;
+
 trait Repository {
     type Entity;
     type NewEntity;
-    type Key;
+    type Key : Hash + Ord;
     type RepoResult;
+
+    /// get all entities.
+    /// # return
+    /// the iterator of all entities.
+    fn get_all(&mut self) -> impl Iterator<Item=Entity>;
 
     /// get the entity by primary key.
     /// # arguments

@@ -8,12 +8,11 @@ CREATE TABLE tags (
 );
 
 CREATE TABLE tag_to (
-    id SERIAL
-        PRIMARY KEY, 
-    the_tag INTEGER REFERENCES tags(id)
+    tag_id INTEGER REFERENCES tags(id)
         ON DELETE CASCADE
         NOT NULL,
-    the_post INTEGER REFERENCES posts(id)
+    post_id INTEGER REFERENCES posts(id)
         ON DELETE CASCADE
-        NOT NULL
+        NOT NULL,
+    PRIMARY KEY (tag_id, post_id)
 );

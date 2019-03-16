@@ -1,6 +1,6 @@
 use std::vec::*;
 use std::time::Instant;
-use vos::database::models::{ Post, NewPost, FormatType };
+use super::models::{ Post, NewPost, FormatType };
 use std::any::Any;
 
 pub struct MockPostRepository {
@@ -15,8 +15,12 @@ impl Repository for MockPostRepository {
     fn get_by_id(&mut self, id: i32) -> Option<Post> {
         self.sample.iter().find(|p| p.id == id)
     }
+    fn get_all(&mut self) -> impl Iterator<Item=Post> {
+        self.mock_items.iter()
+    }
+    fn save(&mut self, item: Self::NewEntity) {
 
-
+    }
 }
 
 impl MockPostRepository {

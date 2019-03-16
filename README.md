@@ -14,7 +14,19 @@ cargo install diesel-cli
 ```bash
 diesel migration run
 ```
-试试看是不是真的创建了：
+试试看能否真的回滚：
 ```bash
 diesel migration redo
 ```
+使用 `diesel setup` 来生成 schema 模块。
+
+# 结构
+在与数据库通信的部分，使用 `diesel` 来连接到 `postgresql`。  
+而后，`wrapper` 部分会提供一个“视图”的抽象（即 `repository`），这里会把数据库中的原始实体包装成更加合适的结构。
+注意：`wrapper` 模块中的 `models` 与 `database` 中的是不同的。  
+此处会建立一套 Actor 系统，前端的连接请求会和这套 Actor 系统通信。  
+
+# 最后要什么？
+**读者**在首页阅读**文章**的简介。
+首页一次性发送数篇新**文章**，**读者**可以**请求**更老的文章，也可以**搜索**满足条件的文章。
+进入具体的**文章**页面后，**读者**可以**评论****文章**。

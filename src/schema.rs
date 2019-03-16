@@ -34,17 +34,16 @@ table! {
 }
 
 table! {
-    tag_to (id) {
-        id -> Int4,
-        the_tag -> Int4,
-        the_post -> Int4,
+    tag_to (tag_id, post_id) {
+        tag_id -> Int4,
+        post_id -> Int4,
     }
 }
 
 joinable!(comments -> posts (is_for));
 joinable!(comments -> readers (publisher));
-joinable!(tag_to -> posts (the_post));
-joinable!(tag_to -> tags (the_tag));
+joinable!(tag_to -> posts (post_id));
+joinable!(tag_to -> tags (tag_id));
 
 allow_tables_to_appear_in_same_query!(
     comments,
