@@ -33,14 +33,14 @@ diesel migration redo
 我希望使用 `repository` 来阻止 Actor 系统和数据库实现产生耦合：不过随后发现很难办，
 因为我为 `Post` 加上了几个方法；但是这几个方法全部和 diesel 有着强耦合：
 就是说，无论如何，`Post` 对象都会需要借助于 diesel 的力量来完成操作。  
-要去掉这几个方法来让 `repository` 可用吗？  
-*绝对不行，因为这样一来，`Post` 就彻底成为了贫血对象了；之后的复杂度只会越来越大。*  
-将 `Post` 作为一个 trait 怎么样？对于序列化和传送，可以让其实现 `Into<WebPost>`；其他的几个方法也可以因此 mock 化。  
+- 要去掉这几个方法来让 `repository` 可用吗？  
+- *绝对不行，因为这样一来，`Post` 就彻底成为了贫血对象了；之后的复杂度只会越来越大。*  
+- 将 `Post` 作为一个 trait 怎么样？对于序列化和传送，可以让其实现 `Into<WebPost>`；其他的几个方法也可以因此 mock 化。  
 *这是目前看来最棒的方法；恰如那句话“接受函数而不是数据结构。”。
 但是很多代码可能需要重写。
-另一个问题是，到现在我对 rust 的 trait 使用还是没什么信心……*  
-或者说，不要 `repository` 了，让 Actor 们直接从 diesel 去获取 `Post`，因为 `Queryable` 在某种程度上本身就带有 `repository` 的特性。  
-*可以，但是问题是：我们并没有去修改 `Queryable` 的能力。`Queryable` 本身也不会提供实现它的类型的信息。
+- 另一个问题是，到现在我对 rust 的 trait 使用还是没什么信心……*  
+- 或者说，不要 `repository` 了，让 Actor 们直接从 diesel 去获取 `Post`，因为 `Queryable` 在某种程度上本身就带有 `repository` 的特性。  
+- *可以，但是问题是：我们并没有去修改 `Queryable` 的能力。`Queryable` 本身也不会提供实现它的类型的信息。
 换句话说，无法类型安全地将其注入到工作的 Actor 中去。*  
 ##### 怎么做？
 让我好好想想吧……

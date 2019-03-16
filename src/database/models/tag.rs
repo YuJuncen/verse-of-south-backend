@@ -5,8 +5,8 @@ use super::post::Post;
 #[table_name = "tags"]
 #[derive(Identifiable, Queryable, Eq, PartialEq, Debug)]
 pub struct Tag {
-    tag_name : String ,
-    id : i32 ,
+    pub tag_name : String ,
+    pub id : i32 ,
 }
 
 #[table_name = "tag_to"]
@@ -15,6 +15,6 @@ pub struct Tag {
 #[belongs_to(Tag)]
 #[belongs_to(Post)]
 pub struct TagTo {
-    tag_id: i32 ,
-    post_id: i32 ,
+    pub tag_id: i32 ,
+    pub post_id: i32 ,
 }
