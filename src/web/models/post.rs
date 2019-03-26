@@ -1,27 +1,26 @@
 use chrono::NaiveDateTime;
-use crate::database::models::post::FormatType;
-pub use FormatType;
 use std::sync::Arc;
+pub use crate::database::models::types::FormatType;
 
 #[derive(Eq, PartialEq, Debug, Clone)]
-struct Reader {
+pub struct Reader {
     pub ip: i64,
     pub name: String,
 }
 
 #[derive(Eq, PartialEq, Debug, Clone)]
-struct Comment {
+pub struct Comment {
     pub publisher: Reader,
     pub content: Arc<String>,
 }
 
 #[derive(Eq, PartialEq, Debug, Clone)]
-struct Tag {
+pub struct Tag {
     pub tag_name: String,
 }
 
 #[derive(Eq, PartialEq, Debug, Clone)]
-struct Post {
+pub struct WebPost {
     pub id : i32,
     pub title: Arc<String>,
     pub intro: Option<String>,
@@ -32,12 +31,13 @@ struct Post {
 }
 
 #[derive(Eq, PartialEq, Debug, Clone)]
-struct PostBody {
+pub struct PostBody {
     pub content: Arc<String>,
     pub format_type: FormatType,
 }
 
-struct NewPost<'a> {
+#[derive(Eq, PartialEq, Debug, Clone)]
+pub struct NewPost<'a> {
     pub title: &'a str,
     pub intro: Option<&'a str>,
     pub tags: Vec<Tag>,
