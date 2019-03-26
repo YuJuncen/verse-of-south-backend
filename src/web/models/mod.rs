@@ -1,1 +1,1 @@
-pub mod post;
+pub mod index_post;
