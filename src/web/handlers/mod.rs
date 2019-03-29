@@ -1,3 +1,2 @@
-pub fn hello() {
-    println!("Hello, there is web!");
-}
+pub mod post;
+pub mod comment;

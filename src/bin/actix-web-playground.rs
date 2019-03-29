@@ -1,26 +1,42 @@
-use actix_web::{server, App, HttpRequest, Responder, HttpResponse, Error};
+use ::actix::prelude::*;
+use actix_web::*;
+use actix_web::middleware;
+use vos::web::handlers::post::*;
+use vos::web::handlers::comment::*;
+use vos::wrapper::actors::index::Index;
+use vos::wrapper::actors::post_actor::PostActor;
+use vos::wrapper::actors::search_actor::SearchActor;
+use vos::web::AppState;
 use futures::future::*;
-use vos::web::models::index_post;
-use chrono::prelude::*;
 
-fn hello_async(_req: HttpRequest) -> impl Future<Item=Result<String, Error>, Error = Error> {
+fn hello_async(_req: HttpRequest<AppState>) -> impl Future<Item=Result<String, Error>, Error = Error> {
     ok(Ok(String::from("Hello, this is ‘promise’ for you.")))
 }
 
-fn post_async(_req: &HttpRequest) -> Result<HttpResponse, Error> {
-    Ok(
-        HttpResponse::Ok() 
-        .json(index_post::Post{ title: String::from("‘promise’ for you"), intro: None, tags: vec![], publish_time: Utc::now().naive_utc()})
-    )
-}
 
 fn main() {
-    server::new(|| {
-        App::new()
+    ::std::env::set_var("RUST_LOG", "actix_web=info");
+    env_logger::init();
+    let sys = actix::System::new("verse-of-south");
+    let addr = SyncArbiter::start(1, move || Index {});
+    let post_addr = SyncArbiter::start(1, move || PostActor {});
+    let search_addr = SyncArbiter::start(1, move || SearchActor {});
+
+    server::new(move || {
+        App::with_state(AppState {index: addr.clone(), post: post_addr.clone(), search: search_addr.clone()})
+            .middleware(middleware::Logger::default())
             .resource("/", |r| r.with_async(hello_async))
-            .resource("/post", |r| r.f(post_async))
+            .scope("/index", |s| {
+                s.resource("/", |r| r.with_async(get_by_page))
+                    .resource("/query", |r| r.with_async(get_by_pred))})
+            .resource("/post", |r| r.with_async(get_post_by_id))
+            .resource("/comment", |r| 
+                r.method(http::Method::POST)
+                    .with_async(comment_to))
             .finish()      
     }).bind("127.0.0.1:8000")
     .expect("Failed to bind.")
-    .run();
+    .start();
+
+    let _ = sys.run();
 }

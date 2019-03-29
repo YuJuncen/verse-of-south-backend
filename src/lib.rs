@@ -1,12 +1,12 @@
 #[macro_use]
 extern crate diesel;
-#[macro_use]
 extern crate futures;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
 extern crate actix;
 extern crate dotenv;
+extern crate env_logger;
 
 pub mod database;
 pub mod web;

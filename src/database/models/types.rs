@@ -4,7 +4,7 @@ use diesel::backend::Backend;
 use diesel::deserialize::{self, FromSql};
 use diesel::serialize::{self, ToSql, Output};
 
-#[derive(Debug, Eq, PartialEq, AsExpression, FromSqlRow, Clone)]
+#[derive(Debug, Eq, PartialEq, AsExpression, FromSqlRow, Clone, Serialize)]
 #[sql_type = "SmallInt"]
 pub enum FormatType {
     Markdown, HTML, PlainText, WriteDone

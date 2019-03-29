@@ -1,4 +1,5 @@
-use vos::database::models::post::{ NewPost, Post, FormatType };
+use vos::database::models::post::{ NewPost, Post };
+use vos::database::models::types::FormatType;
 use vos::database;
 use chrono::prelude::*;
 use diesel::prelude::*;
@@ -15,11 +16,10 @@ fn main() {
     };
     let np = NewPost::new("Hi!", "新的冒险已经开始了！", None);
     let conn = database::establish_connection();
-    // let res = diesel::insert_into(posts)
-    //    .values(&np)
-    //    .get_result::<Post>(&conn);
-    let p2 = posts.filter(id.eq(2))
+    let _res = diesel::insert_into(posts)
+        .values(&np)
+        .get_result::<Post>(&conn);
+    let p2 = posts.filter(id.eq(1))
         .load::<Post>(&conn).unwrap();
-    let tag_of_id_2 = p2.get(0).unwrap().get_tags(&conn);
-    println!("{:?}  //\n{:?}  //\n{:?}", post, np, tag_of_id_2);
+    println!("{:?}  //\n{:?}  //\n{:?}", post, np, p2);
 }
