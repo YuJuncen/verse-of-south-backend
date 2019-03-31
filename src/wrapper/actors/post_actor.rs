@@ -1,6 +1,7 @@
 use actix::prelude::*;
 use chrono::prelude::*;
 use crate::web::handlers::post::*;
+use crate::wrapper::messages::*;
 use crate::web::models::index_post::*;
 use crate::web::models::detailed_post::*;
 

@@ -25,6 +25,7 @@ fn main() {
     server::new(move || {
         App::with_state(AppState {index: addr.clone(), post: post_addr.clone(), search: search_addr.clone()})
             .middleware(middleware::Logger::default())
+            .prefix("/resources")
             .resource("/", |r| r.with_async(hello_async))
             .scope("/index", |s| {
                 s.resource("/", |r| r.with_async(get_by_page))

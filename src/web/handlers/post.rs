@@ -3,31 +3,12 @@ use futures::future::*;
 use crate::web::models::index_post::*;
 use crate::web::models::detailed_post::*;
 use crate::web::AppState;
+use crate::wrapper::messages::*;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone, Copy)]
 pub struct PageQuery {
     pub offset: Option<u32>,
     pub limit: Option<u32>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct PredicateQuery {
-    pub title: Option<String>,
-    pub tags: Option<String>,
-}
-
-impl Into<PredicateQueryMessage> for PredicateQuery {
-    fn into(self) -> PredicateQueryMessage {
-        PredicateQueryMessage {
-        title: self.title,
-        tags: self.tags.map(|s| s.split("+").map(|s| Tag { name: String::from(s) }).collect()).unwrap_or(vec![]),
-    }
-    }
-}
-
-pub struct PredicateQueryMessage {
-    pub title: Option<String>,
-    pub tags: Vec<Tag>
 }
 
 #[derive(Deserialize, Debug)]
@@ -35,14 +16,25 @@ pub struct PostIdQuery {
     pub id: u32,
 }
 
+#[derive(Deserialize, Debug)]
+pub struct PredicateQuery {
+    pub page: Option<PageQuery>,
+    pub title: Option<String>,
+    pub tags: Option<String>,
+}
+
+
+
+
+
 pub fn get_by_page((req, p): (HttpRequest<AppState>, Query<PageQuery>)) -> impl Future<Item=HttpResponse, Error=Error> {
-    req.state().index.send(p.into_inner())
+    req.state().index.send(p.into_inner().into())
         .from_err()
         .map(|ps| HttpResponse::Ok().json(ps))
 }
 
 pub fn get_by_pred((req, p): (HttpRequest<AppState>, Query<PredicateQuery>)) -> impl Future<Item=HttpResponse, Error=Error> {
-    req.state().search.send::<PredicateQueryMessage>(p.into_inner().into())
+    req.state().search.send::<GiveMePostOfPageMatches>(p.into_inner().into())
         .from_err()
         .map(|ps| HttpResponse::Ok().json(ps))
 }

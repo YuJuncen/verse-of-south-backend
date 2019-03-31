@@ -1,6 +1,6 @@
 use actix::prelude::*;
 use chrono::prelude::*;
-use crate::web::handlers::post::*;
+use crate::wrapper::messages::*;
 use crate::web::models::index_post::*;
 
 pub struct SearchActor {
@@ -11,9 +11,9 @@ impl Actor for SearchActor {
     type Context = SyncContext<Self>;
 }
 
-impl Handler<PredicateQueryMessage> for SearchActor {
+impl Handler<GiveMePostOfPageMatches> for SearchActor {
     type Result = Result<Vec<Post>, ()>;
-    fn handle(&mut self, msg: PredicateQueryMessage, _ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: GiveMePostOfPageMatches, _ctx: &mut Self::Context) -> Self::Result {
         Ok(
             vec![Post {
             title: String::from("“Promise” for you."),
