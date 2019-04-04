@@ -3,7 +3,9 @@ use chrono::prelude::*;
 
 #[derive(Serialize, Debug)]
 pub struct Comment {
-    publisher_name: String,
-    publish_time: NaiveDateTime,
-    content: String,
+    pub publisher_name: String,
+    pub publish_time: NaiveDateTime,
+    pub publisher_email: Option<String>,
+    pub content: String,
+    pub reply_to: Option<i32>,
 }

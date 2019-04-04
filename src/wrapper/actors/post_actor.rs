@@ -1,29 +1,28 @@
 use actix::prelude::*;
-use chrono::prelude::*;
-use crate::web::handlers::post::*;
+use futures::future::*;
 use crate::wrapper::messages::*;
-use crate::web::models::index_post::*;
 use crate::web::models::detailed_post::*;
+use crate::web::models::comment::Comment;
+use crate::wrapper::actors::pgdatabase;
 
-pub struct PostActor {}
-
-impl Actor for PostActor {
-    type Context = SyncContext<Self>;
+pub struct PostActor {
+    pub db: Addr<pgdatabase::PGDatabase>,
 }
 
-impl Handler<PostIdQuery> for PostActor {
-    type Result = Result<DetailedPost, ()>;
-    fn handle(&mut self, _msg: PostIdQuery, _: &mut Self::Context) -> Self::Result {
-        Ok(DetailedPost {
-            base: Post {
-                title: String::from("“Promise” for you."),
-                intro: None,
-                tags: vec![],
-                publish_time: Utc::now().naive_utc(),
-            },
-            content: "# Sample  \nHello, world!".to_string(),
-            format_type: FormatType::Markdown,
-            comments: vec![],
-        })
+impl Actor for PostActor {
+    type Context = Context<Self>;
+}
+
+impl Handler<GiveMeFullPostOfId> for PostActor {
+    type Result = Box<Future<Item=DetailedPost, Error=()>>;
+    fn handle(&mut self, msg: GiveMeFullPostOfId, _: &mut Self::Context) -> Self::Result {
+        Box::new(self.db.send(msg).map(|p| p.unwrap()).map_err(|_| ()))
+    }
+}
+
+impl Handler<CommentToPost> for PostActor {
+    type Result = Box<Future<Item=Comment, Error=()>>;
+    fn handle(&mut self, msg: CommentToPost, _: &mut Self::Context) -> Self::Result {
+        Box::new(self.db.send(msg).map(|p| p.unwrap()).map_err(|_| ()))
     }
 }

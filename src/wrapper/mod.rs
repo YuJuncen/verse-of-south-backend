@@ -2,10 +2,15 @@ pub mod actors;
 pub mod messages {
     use actix::prelude::*;
     use crate::web::handlers::post::*;
+    use crate::web::handlers::comment::NewComment;
     use crate::web::models::index_post::*;
     use crate::web::models::detailed_post::DetailedPost;
+    use crate::web::models::comment::Comment;
     
     fn get_default_page_size() -> u32 { 4 }
+
+    #[derive(Debug)]
+    pub struct GiveMeFullPostOfId(pub i32);
 
     #[derive(Debug)]
     pub struct PageInfo {
@@ -21,8 +26,25 @@ pub mod messages {
     }
 
     #[derive(Debug)]
-        pub struct GiveMePostOfPage {
+    pub struct GiveMePostOfPage {
         pub page: PageInfo,
+    }
+
+    #[derive(Debug)]
+    pub struct CommentToPost {
+        pub publisher: String,
+        pub publisher_email: Option<String>,
+        pub content: String,
+        pub to: i32,
+        pub reply_to: Option<i32>
+    }
+
+    impl Message for GiveMeFullPostOfId {
+        type Result = Result<DetailedPost, ()>;
+    }
+
+    impl Message for CommentToPost {
+        type Result = Result<Comment, ()>;
     }
 
     impl Message for GiveMePostOfPage {
@@ -33,8 +55,22 @@ pub mod messages {
         type Result = Result<Vec<Post>, ()>;
     }
 
-    impl Message for PostIdQuery {
-        type Result = Result<DetailedPost, ()>;
+    impl Into<GiveMeFullPostOfId> for PostIdQuery {
+        fn into(self) -> GiveMeFullPostOfId {
+            GiveMeFullPostOfId(self.id as i32)
+        }
+    }
+
+    impl Into<CommentToPost> for NewComment {
+        fn into(self) -> CommentToPost {
+            CommentToPost {
+                content: self.comment,
+                publisher: self.publisher_name,
+                publisher_email: self.publisher_email,
+                to: self.to,
+                reply_to: self.reply_to,
+            }
+        }
     }
 
     impl Into<PageInfo> for PageQuery {

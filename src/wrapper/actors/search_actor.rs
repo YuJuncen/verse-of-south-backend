@@ -2,19 +2,20 @@ use actix::prelude::*;
 use chrono::prelude::*;
 use crate::wrapper::messages::*;
 use crate::web::models::index_post::*;
+use futures::future::*;
 
 pub struct SearchActor {
 
 }
 
 impl Actor for SearchActor {
-    type Context = SyncContext<Self>;
+    type Context = Context<Self>;
 }
 
 impl Handler<GiveMePostOfPageMatches> for SearchActor {
-    type Result = Result<Vec<Post>, ()>;
+    type Result = Box<Future<Item=Vec<Post>, Error=()>>;
     fn handle(&mut self, msg: GiveMePostOfPageMatches, _ctx: &mut Self::Context) -> Self::Result {
-        Ok(
+        Box::new(ok(
             vec![Post {
             title: String::from("“Promise” for you."),
             intro: None,
@@ -26,6 +27,6 @@ impl Handler<GiveMePostOfPageMatches> for SearchActor {
             tags: vec![Tag {name: "OFFSET".to_string()}, Tag {name: "LIMIT".to_string()}],
             publish_time: Utc::now().naive_utc(),
         }]
-        )
+        ))
     } 
 }

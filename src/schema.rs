@@ -4,8 +4,9 @@ table! {
         publish_time -> Timestamp,
         content -> Text,
         publisher_name -> Varchar,
-        publisher -> Nullable<Int4>,
-        is_for -> Nullable<Int4>,
+        publisher_email -> Nullable<Varchar>,
+        post_id -> Int4,
+        reply_to -> Nullable<Int4>,
     }
 }
 
@@ -21,8 +22,9 @@ table! {
 }
 
 table! {
-    readers (ip) {
-        ip -> Int4,
+    tag_to (tag_id, post_id) {
+        tag_id -> Int4,
+        post_id -> Int4,
     }
 }
 
@@ -33,22 +35,13 @@ table! {
     }
 }
 
-table! {
-    tag_to (tag_id, post_id) {
-        tag_id -> Int4,
-        post_id -> Int4,
-    }
-}
-
-joinable!(comments -> posts (is_for));
-joinable!(comments -> readers (publisher));
+joinable!(comments -> posts (post_id));
 joinable!(tag_to -> posts (post_id));
 joinable!(tag_to -> tags (tag_id));
 
 allow_tables_to_appear_in_same_query!(
     comments,
     posts,
-    readers,
-    tags,
     tag_to,
+    tags,
 );

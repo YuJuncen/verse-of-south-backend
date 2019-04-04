@@ -6,6 +6,8 @@ use vos::web::handlers::comment::*;
 use vos::wrapper::actors::index::Index;
 use vos::wrapper::actors::post_actor::PostActor;
 use vos::wrapper::actors::search_actor::SearchActor;
+use vos::wrapper::actors::pgdatabase::PGDatabase;
+use vos::database::establish_connection;
 use vos::web::AppState;
 use futures::future::*;
 
@@ -18,9 +20,10 @@ fn main() {
     ::std::env::set_var("RUST_LOG", "actix_web=info");
     env_logger::init();
     let sys = actix::System::new("verse-of-south");
-    let addr = SyncArbiter::start(1, move || Index {});
-    let post_addr = SyncArbiter::start(1, move || PostActor {});
-    let search_addr = SyncArbiter::start(1, move || SearchActor {});
+    let db = SyncArbiter::start(3, || PGDatabase::new(establish_connection()) );
+    let addr = Index { db : db.clone() }.start();
+    let post_addr = PostActor { db : db.clone() }.start();
+    let search_addr = SearchActor {}.start();
 
     server::new(move || {
         App::with_state(AppState {index: addr.clone(), post: post_addr.clone(), search: search_addr.clone()})
@@ -28,7 +31,7 @@ fn main() {
             .prefix("/resources")
             .resource("/", |r| r.with_async(hello_async))
             .scope("/index", |s| {
-                s.resource("/", |r| r.with_async(get_by_page))
+                s.resource("", |r| r.with_async(get_by_page))
                     .resource("/query", |r| r.with_async(get_by_pred))})
             .resource("/post", |r| r.with_async(get_post_by_id))
             .resource("/comment", |r| 

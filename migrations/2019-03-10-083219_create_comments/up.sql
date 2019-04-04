@@ -7,8 +7,11 @@ CREATE TABLE comments (
     DEFAULT now(),
   content TEXT NOT NULL ,
   publisher_name VARCHAR NOT NULL ,
-  publisher INTEGER
-    REFERENCES readers(IP),
-  is_for INTEGER
+  publisher_email VARCHAR,
+  post_id INTEGER
     REFERENCES posts(id)
+    NOT NULL,
+  reply_to INTEGER
+    REFERENCES comments(id),
+  CHECK (LOWER(publisher_email) SIMILAR TO '([a-z0-9_\.-]+)@([\da-z\.-])+\.([a-z\.]{2,6})')
 )

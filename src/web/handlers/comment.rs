@@ -1,29 +1,22 @@
 use actix_web::*;
-use futures::future::{ok, Future};
+use futures::future::*;
 use crate::web::AppState;
+use crate::wrapper::messages::*;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct CommentTo {
-    comment: String,
-    publisher_name: String,
-    comment_to: i32,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct SampleReturnValue {
-    comment: String,
-    publisher_name: String,
-    publisher_addr: String,
+pub struct NewComment {
+    pub comment: String,
+    pub publisher_name: String,
+    pub publisher_email: Option<String>,
+    pub to: i32,
+    pub reply_to: Option<i32>
 }
 
 
-pub fn comment_to((req, comment): (HttpRequest<AppState>, Json<CommentTo>)) -> impl Future<Item=HttpResponse, Error=Error> {
-    ok(
-        HttpResponse::Created()
-            .json(SampleReturnValue {
-                comment: comment.comment.clone(),
-                publisher_name: comment.publisher_name.clone(),
-                publisher_addr: req.peer_addr().map(|addr| format!("{:?}", addr.ip())).unwrap_or("UnKnown".to_string())
-            })
-    )
+pub fn comment_to((req, comment): (HttpRequest<AppState>, Json<NewComment>)) -> impl Future<Item=HttpResponse, Error=Error> {
+    req.state().post.send::<CommentToPost>(comment.into_inner().into())
+        .map(|c| c.unwrap())
+        .map(|c| HttpResponse::Created()
+            .json(c))
+        .from_err()
 }
