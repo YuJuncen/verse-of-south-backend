@@ -22,16 +22,16 @@ table! {
 }
 
 table! {
-    tag_to (tag_id, post_id) {
-        tag_id -> Int4,
-        post_id -> Int4,
+    tags (id) {
+        tag_name -> Varchar,
+        id -> Int4,
     }
 }
 
 table! {
-    tags (id) {
-        tag_name -> Varchar,
-        id -> Int4,
+    tag_to (tag_id, post_id) {
+        tag_id -> Int4,
+        post_id -> Int4,
     }
 }
 
@@ -42,6 +42,6 @@ joinable!(tag_to -> tags (tag_id));
 allow_tables_to_appear_in_same_query!(
     comments,
     posts,
-    tag_to,
     tags,
+    tag_to,
 );

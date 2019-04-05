@@ -5,7 +5,6 @@ use vos::web::handlers::post::*;
 use vos::web::handlers::comment::*;
 use vos::wrapper::actors::index::Index;
 use vos::wrapper::actors::post_actor::PostActor;
-use vos::wrapper::actors::search_actor::SearchActor;
 use vos::wrapper::actors::pgdatabase::PGDatabase;
 use vos::database::establish_connection;
 use vos::web::AppState;
@@ -17,16 +16,15 @@ fn hello_async(_req: HttpRequest<AppState>) -> impl Future<Item=Result<String, E
 
 
 fn main() {
-    ::std::env::set_var("RUST_LOG", "actix_web=info");
+    ::std::env::set_var("RUST_LOG", "debug");
     env_logger::init();
     let sys = actix::System::new("verse-of-south");
-    let db = SyncArbiter::start(3, || PGDatabase::new(establish_connection()) );
+    let db = SyncArbiter::start(8, || PGDatabase::new(establish_connection()) );
     let addr = Index { db : db.clone() }.start();
     let post_addr = PostActor { db : db.clone() }.start();
-    let search_addr = SearchActor {}.start();
 
     server::new(move || {
-        App::with_state(AppState {index: addr.clone(), post: post_addr.clone(), search: search_addr.clone()})
+        App::with_state(AppState {index: addr.clone(), post: post_addr.clone()})
             .middleware(middleware::Logger::default())
             .prefix("/resources")
             .resource("/", |r| r.with_async(hello_async))

@@ -3,7 +3,7 @@ use super::types::FormatType;
 use crate::schema::posts;
 
 
-#[derive(Identifiable, Queryable, Debug, Eq, PartialEq)]
+#[derive(Identifiable, Queryable, Debug, Eq, PartialEq, QueryableByName)]
 #[table_name="posts"]
 pub struct Post {
     pub id: i32 ,  

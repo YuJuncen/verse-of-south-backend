@@ -5,17 +5,40 @@ pub mod messages {
     use crate::web::handlers::comment::NewComment;
     use crate::web::models::index_post::*;
     use crate::web::models::detailed_post::DetailedPost;
+    use crate::wrapper::actors::pgdatabase::DatabaseError;
     use crate::web::models::comment::Comment;
+    use diesel::sql_types::{ BigInt, Double };
     
-    fn get_default_page_size() -> u32 { 4 }
+    fn get_default_page_size() -> i64 { 4 }
+
+    #[derive(Debug, Clone, QueryableByName, Serialize)]
+    pub struct ArchiveInfo{
+        #[column_name = "yer"]
+        #[sql_type = "Double"]
+        pub year: f64,
+        #[column_name = "mon"]
+        #[sql_type = "Double"]
+        pub month: f64,
+        #[column_name = "cnt"]
+        #[sql_type = "BigInt"]
+        pub count: i64,
+    }
+
+    #[derive(Debug)]
+    pub struct GiveMeArchiveOf{
+        pub year: i32,
+        pub month: i32,
+        pub page: PageInfo,
+    }
+    pub struct GiveMeArchiveInfo;
 
     #[derive(Debug)]
     pub struct GiveMeFullPostOfId(pub i32);
 
     #[derive(Debug)]
     pub struct PageInfo {
-        pub offset: u32,
-        pub limit: u32,
+        pub offset: i64,
+        pub limit: i64,
     }
 
     #[derive(Debug)]
@@ -39,20 +62,28 @@ pub mod messages {
         pub reply_to: Option<i32>
     }
 
+    impl Message for GiveMeArchiveInfo {
+        type Result = Result<Vec<ArchiveInfo>, DatabaseError>;
+    }
+
+    impl Message for GiveMeArchiveOf {
+        type Result = Result<Vec<Post>, DatabaseError>;
+    }
+
     impl Message for GiveMeFullPostOfId {
-        type Result = Result<DetailedPost, ()>;
+        type Result = Result<DetailedPost, DatabaseError>;
     }
 
     impl Message for CommentToPost {
-        type Result = Result<Comment, ()>;
+        type Result = Result<Comment, DatabaseError>;
     }
 
     impl Message for GiveMePostOfPage {
-        type Result = Result<Vec<Post>, ()>;
+        type Result = Result<Vec<Post>, DatabaseError>;
     }
 
     impl Message for GiveMePostOfPageMatches {
-        type Result = Result<Vec<Post>, ()>;
+        type Result = Result<Vec<Post>, DatabaseError>;
     }
 
     impl Into<GiveMeFullPostOfId> for PostIdQuery {
