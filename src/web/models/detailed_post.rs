@@ -1,15 +1,11 @@
 use super::index_post::Post;
 use super::comment::Comment;
-use serde::ser::{ Serialize, Serializer};
 use actix_web::*;
 use std::sync::Arc;
+use crate::web::deserizlize_pointer;
 
 pub use crate::database::models::types::FormatType;
 
-
-fn deserizlize_pointer<T: Serialize, S: Serializer>(p: &std::sync::Arc<T>,  s: S) -> Result<S::Ok, S::Error> {
-    p.serialize(s)
-}
 
 #[derive(Serialize, Debug)]
 pub struct DetailedPost {

@@ -7,6 +7,7 @@ use crate::web::models::index_post::*;
 use crate::database::models as M;
 use crate::web::models::detailed_post::*;
 use crate::database::models::comment::*;
+use crate::database::models::types::ArchiveInfo;
 
 fn serialize_intostr<T: ToString, S: Serializer>(s: &T, ser: S) -> Result<S::Ok, S::Error>{
     s.to_string().serialize(ser)
@@ -76,8 +77,41 @@ impl M::post::Post {
             title: self.title.clone(),
             publish_time: self.publish_time.clone(),
             intro: self.intro.clone(),
-            tags: self.get_tags(conn).into_iter().map(|t| Tag {name: t.tag_name}).collect()
+            tags: self.get_tags(conn).into_iter().map(|t| std::sync::Arc::new(Tag {name: t.tag_name})).collect()
         }
+    }
+
+    #[allow(dead_code)]
+    fn batch_into_index_post(sf: Vec<Self>, conn: &PgConnection) -> Result<Vec<Post>, DatabaseError> {
+        use std::collections::BTreeMap;
+        use std::sync::Arc;
+        use crate::schema::{ tags, tag_to };
+        use diesel::dsl::any;
+        let post_tag_info = T::TagTo::belonging_to(&sf)
+            .load::<T::TagTo>(conn)?
+            .grouped_by(&sf);
+            
+        let post_tag_ids = T::TagTo::belonging_to(&sf)
+            .select(tag_to::dsl::tag_id)
+            .distinct();
+
+        let tag_id_mapping : BTreeMap<_, _> = tags::table
+            .filter(tags::dsl::id.eq(any(post_tag_ids)))
+            .load::<T::Tag>(conn)?
+            .into_iter()
+            .map(|t| (t.id, Arc::new(Tag {name : t.tag_name})))
+            .collect();
+        
+        let not_found = Arc::new(Tag{name: "<Tag not found>".to_string()});
+
+        Ok(sf.into_iter().zip(post_tag_info).map(|(p, ts)| Post {
+            title: p.title,
+            publish_time: p.publish_time,
+            intro: p.intro,
+            tags: ts.into_iter().map(|tt| {
+                tag_id_mapping.get(&tt.tag_id).map(Clone::clone).unwrap_or(not_found.clone()).clone()
+            }).collect()
+        }).collect())
     }
 }
 
@@ -100,8 +134,8 @@ impl Handler<GiveMePostOfPage> for PGDatabase {
         posts.limit(msg.page.limit.into())
             .offset(msg.page.offset.into())
             .load::<M::post::Post>(&self.connection)
-            .map(|v| v.into_iter().map(|p| p.into_index_post(&self.connection)).collect())
-            .map_err(|e| e.to_string().into())
+            .map_err(|e| e.into())
+            .and_then(|v| M::post::Post::batch_into_index_post(v, &self.connection))
     }
 }
 
@@ -127,8 +161,9 @@ impl Handler<GiveMePostOfPageMatches> for PGDatabase {
         debug!("{:?}", diesel::debug_query::<diesel::pg::Pg, _>(&mps));
         let result = mps.load::<DPost>(&self.connection);
         debug!("{:?}", result);
-        result.map(|ps : Vec<DPost>| ps.into_iter().map(|p| p.into_index_post(&self.connection)).collect())
+        result
             .map_err(|e : diesel::result::Error| e.into())
+            .and_then(|v| M::post::Post::batch_into_index_post(v, &self.connection))
     }
 }
 

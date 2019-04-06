@@ -7,22 +7,9 @@ pub mod messages {
     use crate::web::models::detailed_post::DetailedPost;
     use crate::wrapper::actors::pgdatabase::DatabaseError;
     use crate::web::models::comment::Comment;
-    use diesel::sql_types::{ BigInt, Double };
-    
-    fn get_default_page_size() -> i64 { 4 }
+    use crate::database::models::types::ArchiveInfo;
 
-    #[derive(Debug, Clone, QueryableByName, Serialize)]
-    pub struct ArchiveInfo{
-        #[column_name = "yer"]
-        #[sql_type = "Double"]
-        pub year: f64,
-        #[column_name = "mon"]
-        #[sql_type = "Double"]
-        pub month: f64,
-        #[column_name = "cnt"]
-        #[sql_type = "BigInt"]
-        pub count: i64,
-    }
+    fn get_default_page_size() -> i64 { 4 }
 
     #[derive(Debug)]
     pub struct GiveMeArchiveOf{

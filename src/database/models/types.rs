@@ -4,6 +4,7 @@ use diesel::backend::Backend;
 use diesel::deserialize::{self, FromSql};
 use diesel::serialize::{self, ToSql, Output};
 
+
 #[derive(Copy, Debug, Eq, PartialEq, AsExpression, FromSqlRow, Clone, Serialize)]
 #[sql_type = "SmallInt"]
 pub enum FormatType {
@@ -38,3 +39,15 @@ impl <DB: Backend> FromSql<SmallInt, DB> for FormatType
     }
 }
 
+#[derive(Debug, Clone, QueryableByName, Serialize)]
+pub struct ArchiveInfo{
+    #[column_name = "yer"]
+    #[sql_type = "Double"]
+    pub year: f64,
+    #[column_name = "mon"]
+    #[sql_type = "Double"]
+    pub month: f64,
+    #[column_name = "cnt"]
+    #[sql_type = "BigInt"]
+    pub count: i64,
+}
