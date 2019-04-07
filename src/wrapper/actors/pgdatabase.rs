@@ -58,7 +58,7 @@ impl Actor for PGDatabase {
 }
 
 impl M::post::Post {
-    pub fn get_tags<C, Tr>(&self, conn: &C) -> Vec<T::Tag> where 
+    pub fn get_tags<C, Tr>(&self, conn: &C) -> Result<Vec<T::Tag>, DatabaseError> where 
     C: Connection<TransactionManager=Tr, Backend=diesel::pg::Pg>,
     Tr: diesel::connection::TransactionManager<C> {
         use diesel::dsl::any;
@@ -69,19 +69,19 @@ impl M::post::Post {
 
         tags::table.filter(tags::id.eq(any(post_tag_ids)))
             .load::<T::Tag>(conn)
-            .expect("failed to load tags")
+            .map_err(|e| e.into())
     }
 
-    fn into_index_post(&self, conn: &PgConnection) -> Post {
-        Post {
+    fn into_index_post(&self, conn: &PgConnection) -> Result<Post, DatabaseError> {
+        let ts = self.get_tags(conn)?;
+        Ok(Post {
             title: self.title.clone(),
             publish_time: self.publish_time.clone(),
             intro: self.intro.clone(),
-            tags: self.get_tags(conn).into_iter().map(|t| std::sync::Arc::new(Tag {name: t.tag_name})).collect()
-        }
+            tags: ts.into_iter().map(|t| std::sync::Arc::new(Tag {name: t.tag_name})).collect()
+        })
     }
 
-    #[allow(dead_code)]
     fn batch_into_index_post(sf: Vec<Self>, conn: &PgConnection) -> Result<Vec<Post>, DatabaseError> {
         use std::collections::BTreeMap;
         use std::sync::Arc;
@@ -127,18 +127,6 @@ impl Into<crate::web::models::comment::Comment> for Comment {
     }
 }
 
-impl Handler<GiveMePostOfPage> for PGDatabase {
-    type Result = Result<Vec<Post>, DatabaseError>;
-    fn handle(&mut self, msg: GiveMePostOfPage, _ctx: &mut Self::Context) -> Self::Result {
-        use crate::schema::posts::dsl::*;
-        posts.limit(msg.page.limit.into())
-            .offset(msg.page.offset.into())
-            .load::<M::post::Post>(&self.connection)
-            .map_err(|e| e.into())
-            .and_then(|v| M::post::Post::batch_into_index_post(v, &self.connection))
-    }
-}
-
 impl Handler<GiveMePostOfPageMatches> for PGDatabase {
     type Result = Result<Vec<Post>, DatabaseError>;
     fn handle(&mut self, msg: GiveMePostOfPageMatches, _ctx: &mut Self::Context) -> Self::Result {
@@ -172,15 +160,15 @@ impl Handler<GiveMeFullPostOfId> for PGDatabase {
     fn handle(&mut self, msg: GiveMeFullPostOfId, _ctx: &mut Self::Context) -> Self::Result {
         use crate::schema::posts::dsl::*;
         use crate::database::models::comment::Comment;
-        let post = posts.filter(id.eq(msg.0)).get_result::<crate::database::models::post::Post>(&self.connection);
-        post.and_then(
-            |post| Comment::belonging_to(&post).load::<Comment>(&self.connection).map(
-            |comment| DetailedPost {
-                base: post.into_index_post(&self.connection),
-                content: std::sync::Arc::new(post.body.clone()),
-                comments: comment.into_iter().map(|p| p.into()).collect(),
-                format_type: post.body_format,
-        })).map_err(|e| e.into() )
+        let post = posts.filter(id.eq(msg.0)).get_result::<crate::database::models::post::Post>(&self.connection)?;
+        let comments = Comment::belonging_to(&post).load::<Comment>(&self.connection)?;
+        let base_post = post.into_index_post(&self.connection)?;
+        Ok(DetailedPost {
+            base: base_post,
+            content: std::sync::Arc::new(post.body),
+            comments: comments.into_iter().map(|p| p.into()).collect(),
+            format_type: post.body_format,
+        })
     }
 }
 
@@ -222,10 +210,10 @@ impl Handler<GiveMeArchiveOf> for PGDatabase {
         .bind::<Integer, _>(msg.month)
         .bind::<BigInt, _>(msg.page.offset)
         .bind::<BigInt, _>(msg.page.limit);
-        println!("{:?}", diesel::debug_query::<diesel::pg::Pg, _>(&posts));
+        debug!("selecting archives by sql: {:?}", diesel::debug_query::<diesel::pg::Pg, _>(&posts));
         posts
             .load::<DPost>(&self.connection)
-            .map(|ps| ps.into_iter().map(|p| p.into_index_post(&self.connection)).collect())
             .map_err(|e| e.into())
+            .and_then(|v| M::post::Post::batch_into_index_post(v, &self.connection))
     }
 }

@@ -1,3 +1,4 @@
+use crate::database::models::types::ArchiveInfo;
 use actix::prelude::*;
 use crate::wrapper::messages::*;
 use futures::future::*;
@@ -33,4 +34,24 @@ impl Handler<GiveMePostOfPageMatches> for Index {
             Err(e) => err(e)
         }))
     } 
+}
+
+impl Handler<GiveMeArchiveInfo> for Index {
+    type Result = Box<Future<Item=Vec<ArchiveInfo>, Error=super::pgdatabase::DatabaseError>>;
+    fn handle(&mut self, msg: GiveMeArchiveInfo, _ctx: &mut Self::Context) -> Self::Result {
+        Box::new(self.db.send(msg).map_err(|e| e.into()).and_then(|p| match p {
+            Ok(o) => ok(o),
+            Err(e) => err(e)
+        }))
+    }
+}
+
+impl Handler<GiveMeArchiveOf> for Index {
+    type Result = Box<Future<Item=Vec<Post>, Error=super::pgdatabase::DatabaseError>>;
+    fn handle(&mut self, msg: GiveMeArchiveOf, _ctx: &mut Self::Context) -> Self::Result {
+        Box::new(self.db.send(msg).map_err(|e| e.into()).and_then(|p| match p {
+            Ok(o) => ok(o),
+            Err(e) => err(e)
+        }))
+    }
 }
