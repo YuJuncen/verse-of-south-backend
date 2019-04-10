@@ -140,10 +140,10 @@ impl Handler<GiveMePostOfPageMatches> for PGDatabase {
             EXCEPT 
             (SELECT tag_id FROM posts P2 INNER JOIN tag_to ON post_id = P2.id WHERE P1.id = P2.id))
         AND
-            P1.title LIKE $2
+            P1.title LIKE ALL ( string_to_array($2, ' ')::text[] )
         LIMIT $3 OFFSET $4")
         .bind::<Text, String>(msg.tags.into_iter().map(|t| t.name).collect::<Vec<String>>().join(":"))
-        .bind::<Text, _>(format!("%{}%", msg.title.unwrap_or_default()))
+        .bind::<Text, _>(msg.title.map(|t| t.trim().split(' ').map(|c| format!("%{}%", c)).collect::<Vec<_>>().join(" ")).unwrap_or_default())
         .bind::<BigInt, _>(msg.page.limit as i64)
         .bind::<BigInt, _>(msg.page.offset as i64);
         debug!("{:?}", diesel::debug_query::<diesel::pg::Pg, _>(&mps));

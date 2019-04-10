@@ -9,7 +9,7 @@ use diesel::prelude::*;
 fn main() {
     use vos::schema::posts::dsl::*;
     let conn = database::establish_connection();
-/*     let post = Post {
+    let post = Post {
         id: 0,
         title: String::from("Hello, world!"),
         intro: Option::None,
@@ -17,16 +17,11 @@ fn main() {
         body: String::from("# 你好  \n这里是南方之诗！"),
         body_format: FormatType::Markdown
     };
-    let np = NewPost::new("Hi!", "新的冒险已经开始了！", None);
+    let np = NewPost::new("呀嚯！", "# 恭喜！  \n能见到这句话说明这个网站更加成熟了。", Some("😊😊😊🤔💥"));
     let _res = diesel::insert_into(posts)
         .values(&np)
         .get_result::<Post>(&conn);
     let p2 = posts.filter(id.eq(1))
         .load::<Post>(&conn).unwrap();
-    println!("{:?}  //\n{:?}  //\n{:?}", post, np, p2); */
-    let ps = posts.load::<Post>(&conn).unwrap();
-    let post_tag_ids = TagTo::belonging_to(&ps)
-            .load::<TagTo>(&conn).unwrap()
-            .grouped_by(&ps);
-    println!("{:?}\n{:?}", ps, post_tag_ids);
+    println!("{:?}  //\n{:?}  //\n{:?}", post, np, p2);
 }
