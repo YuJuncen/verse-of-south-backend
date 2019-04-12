@@ -29,7 +29,10 @@ impl<U, C: Connection, Dsl: RunQueryDsl<C> + LoadQuery<C, U>> LoadByDsl<U, C, Ds
     }
 }
 
-impl<U: 'static, C: Connection + 'static, Dsl: RunQueryDsl<C> + LoadQuery<C, U>> Message for LoadByDsl<U, C, Dsl> {
+impl<U, C, Dsl> Message for LoadByDsl<U, C, Dsl> where
+    U: 'static,
+    C: Connection + 'static, 
+    Dsl: RunQueryDsl<C> + LoadQuery<C, U> {
     type Result = QueryResult<Vec<U>>;
 }
 
@@ -37,9 +40,10 @@ impl<C: Connection + 'static> Actor for Database<C> {
     type Context = SyncContext<Self>;
 }
 
-impl<U: 'static, 
+impl<U, C, Dsl> Handler<LoadByDsl<U, C, Dsl>> for Database<C> where
+    U: 'static,
     C: Connection + 'static, 
-    Dsl: RunQueryDsl<C> + LoadQuery<C, U>> Handler<LoadByDsl<U, C, Dsl>> for Database<C> {
+    Dsl: RunQueryDsl<C> + LoadQuery<C, U> {
     type Result = QueryResult<Vec<U>>;
     fn handle(&mut self, msg: LoadByDsl<U, C, Dsl>, _ctx: &mut Self::Context) -> Self::Result {
         msg.dsl.load::<U>(&self.connection)
