@@ -2,6 +2,7 @@ use actix_web::*;
 use futures::future::*;
 use crate::web::AppState;
 use crate::wrapper::messages::*;
+use crate::web::models::index_post::{ Tag, Post };
 
 #[derive(Deserialize, Debug)]
 pub struct ArchiveQuery {
@@ -16,19 +17,30 @@ pub struct PageQuery {
 }
 #[derive(Deserialize, Debug)]
 pub struct PredicateQuery {
+    #[serde(flatten)]
     pub page: Option<PageQuery>,
     pub title: Option<String>,
     pub tags: Option<String>,
 }
 
+#[derive(Serialize, Debug)]
+pub struct QueryResult {
+    pub tags_no_usage: Vec<Tag>,
+    pub result: Vec<Post>,
+}
+
 pub fn get_by_page((req, p): (HttpRequest<AppState>, Query<PageQuery>)) -> impl Future<Item=HttpResponse, Error=Error> {
-    req.state().index.send::<GiveMePostOfPage>(p.into_inner().into())
+    let r : GiveMePostOfPage = p.into_inner().into();
+    debug!("[GET_BY_PAGE]RECEIVED: {:?}", r);
+    req.state().index.send::<GiveMePostOfPage>(r)
         .from_err()
         .map(|ps| HttpResponse::Ok().json(ps))
 }
 
 pub fn get_by_pred((req, p): (HttpRequest<AppState>, Query<PredicateQuery>)) -> impl Future<Item=HttpResponse, Error=Error> {
-    req.state().index.send::<GiveMePostOfPageMatches>(p.into_inner().into())
+    let r = p.into_inner();
+    debug!("[GET_BY_PRED]RECEIVED: {:?}", r);
+    req.state().index.send::<GiveMePostOfPageMatches>(r.into())
         .from_err()
         .map(|ps| HttpResponse::Ok().json(ps))
 }
