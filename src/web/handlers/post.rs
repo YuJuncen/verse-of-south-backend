@@ -11,7 +11,7 @@ pub struct PostIdQuery {
 pub fn get_post_by_id((req, p): (HttpRequest<AppState>, Path<PostIdQuery>)) -> impl Future<Item=HttpResponse, Error=Error> {
     use crate::wrapper::actors::pgdatabase::DatabaseError; 
     use diesel::result::Error::NotFound;   
-    req.state().post.send::<GiveMeFullPostOfId>(p.into_inner().into())
+    req.state().database.send::<GiveMeFullPostOfId>(p.into_inner().into())
         .from_err()
         .map(|p| match p {
                 Ok(data) => HttpResponse::Ok().json(data),

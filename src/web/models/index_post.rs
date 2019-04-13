@@ -2,7 +2,7 @@ use chrono::NaiveDateTime;
 use std::sync::Arc;
 use crate::web::{ serialize_vec_of_pointer };
 
-#[derive(Serialize, Debug, Eq, PartialEq)]
+#[derive(Serialize, Debug, Eq, PartialEq, Hash, Clone)]
 pub struct Tag{
     pub name: String,
 }

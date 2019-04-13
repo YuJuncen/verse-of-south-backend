@@ -8,18 +8,27 @@ use crate::database::models as M;
 use crate::web::models::detailed_post::*;
 use crate::database::models::comment::*;
 use crate::database::models::types::ArchiveInfo;
+use std::fmt;
 
 fn serialize_intostr<T: ToString, S: Serializer>(s: &T, ser: S) -> Result<S::Ok, S::Error>{
     s.to_string().serialize(ser)
 }
 
-#[derive(Debug, Serialize)]
+
+#[fail(display = "when query, something wrong happens.")]
+#[derive(Fail, Debug, Serialize)]
 pub enum DatabaseError{
     #[serde(serialize_with = "serialize_intostr")]    
     DieselGoesWrong(diesel::result::Error),
     #[serde(serialize_with = "serialize_intostr")]
     ActorSystemGoesWrong(MailboxError),
     Because(String),
+}
+
+impl fmt::Display for DatabaseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "when query, something goes wrong.")
+    }
 }
 
 pub struct PGDatabase {
@@ -112,6 +121,17 @@ impl M::post::Post {
                 tag_id_mapping.get(&tt.tag_id).map(Clone::clone).unwrap_or(not_found.clone()).clone()
             }).collect()
         }).collect())
+    }
+}
+
+impl Handler<GiveMePostOfPage> for PGDatabase {
+    type Result = Result<Vec<Post>, DatabaseError>;
+    fn handle(&mut self, msg: GiveMePostOfPage, _ctx: &mut Self::Context) -> Self::Result {
+        use crate::schema::posts::dsl::*;
+        let ps = posts.limit(msg.page.limit)
+            .offset(msg.page.offset)
+            .load::<M::post::Post>(&self.connection)?;
+        M::post::Post::batch_into_index_post(ps, &self.connection)    
     }
 }
 
@@ -215,5 +235,14 @@ impl Handler<GiveMeArchiveOf> for PGDatabase {
             .load::<DPost>(&self.connection)
             .map_err(|e| e.into())
             .and_then(|v| M::post::Post::batch_into_index_post(v, &self.connection))
+    }
+}
+
+impl Handler<GiveMeAllTags> for PGDatabase {
+    type Result = Result<Vec<Tag>, DatabaseError>;
+    fn handle(&mut self, _msg: GiveMeAllTags, _ctx: &mut Self::Context) -> Self::Result {
+        use crate::schema::tags::table;
+        let tags = table.load::<T::Tag>(&self.connection)?;
+        Ok(tags.into_iter().map(|t| Tag {name: t.tag_name}).collect())
     }
 }

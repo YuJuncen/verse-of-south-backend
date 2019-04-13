@@ -44,6 +44,9 @@
         pub reply_to: Option<i32>
     }
 
+    #[derive(Debug)]
+    pub struct GiveMeAllTags;
+
     impl Message for GiveMeArchiveInfo {
         type Result = Result<Vec<ArchiveInfo>, DatabaseError>;
     }
@@ -66,4 +69,8 @@
 
     impl Message for GiveMePostOfPageMatches {
         type Result = Result<Vec<Post>, DatabaseError>;
+    }
+
+    impl Message for GiveMeAllTags {
+        type Result = Result<Vec<Tag>, DatabaseError>;
     }

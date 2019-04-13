@@ -4,8 +4,6 @@ use actix_web::middleware::cors::Cors;
 use vos::web::handlers::post::*;
 use vos::web::handlers::comment::*;
 use vos::web::handlers::index::*;
-use vos::wrapper::actors::index::Index;
-use vos::wrapper::actors::post_actor::PostActor;
 use vos::wrapper::actors::pgdatabase::PGDatabase;
 use vos::database::establish_connection;
 use vos::web::AppState;
@@ -16,13 +14,11 @@ struct RootActor;
 impl Actor for RootActor {
     type Context = Context<Self>;
 
-    fn started(&mut self, ctx: &mut Self::Context) {
+    fn started(&mut self, _ctx: &mut Self::Context) {
         let db = SyncArbiter::start(8, || PGDatabase::new(establish_connection()) );
-        let addr = Index { db : db.clone() }.start();
-        let post_addr = PostActor { db : db.clone() }.start();
 
         server::new(move || {
-            App::with_state(AppState {index: addr.clone(), post: post_addr.clone()})
+            App::with_state(AppState {database: db.clone()})
                 .middleware(middleware::Logger::default())
                 .middleware(Cors::default())
                 .prefix("/resources")
@@ -53,6 +49,7 @@ fn hello_async(_req: HttpRequest<AppState>) -> impl Future<Item=Result<String, E
 }
 
 fn main() {
+    ::std::env::set_var("RUST_LOG", "debug");
     env_logger::init();
     let sys = actix::System::new("verse-of-south");
     let _ = RootActor {}.start();
