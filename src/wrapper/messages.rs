@@ -2,7 +2,6 @@
     use crate::web::models::index_post::Tag;
     use crate::web::models::index_post::*;
     use crate::web::models::detailed_post::DetailedPost;
-    use crate::wrapper::actors::pgdatabase::DatabaseError;
     use crate::web::models::comment::Comment;
     use crate::database::models::types::ArchiveInfo;
 

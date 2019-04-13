@@ -57,64 +57,6 @@ impl Actor for PGDatabase {
     }
 }
 
-impl M::post::Post {
-    pub fn get_tags<C, Tr>(&self, conn: &C) -> Result<Vec<T::Tag>, DatabaseError> where 
-    C: Connection<TransactionManager=Tr, Backend=diesel::pg::Pg>,
-    Tr: diesel::connection::TransactionManager<C> {
-        use diesel::dsl::any;
-        use crate::schema::{ tags, tag_to };
-        use diesel::prelude::*;
-
-        let post_tag_ids = T::TagTo::belonging_to(self).select(tag_to::tag_id);
-
-        tags::table.filter(tags::id.eq(any(post_tag_ids)))
-            .load::<T::Tag>(conn)
-            .map_err(|e| e.into())
-    }
-
-    fn into_index_post(&self, conn: &PgConnection) -> Result<Post, DatabaseError> {
-        let ts = self.get_tags(conn)?;
-        Ok(Post {
-            title: self.title.clone(),
-            publish_time: self.publish_time.clone(),
-            intro: self.intro.clone(),
-            tags: ts.into_iter().map(|t| std::sync::Arc::new(Tag {name: t.tag_name})).collect()
-        })
-    }
-
-    fn batch_into_index_post(sf: Vec<Self>, conn: &PgConnection) -> Result<Vec<Post>, DatabaseError> {
-        use std::collections::BTreeMap;
-        use std::sync::Arc;
-        use crate::schema::{ tags, tag_to };
-        use diesel::dsl::any;
-        let post_tag_info = T::TagTo::belonging_to(&sf)
-            .load::<T::TagTo>(conn)?
-            .grouped_by(&sf);
-            
-        let post_tag_ids = T::TagTo::belonging_to(&sf)
-            .select(tag_to::dsl::tag_id)
-            .distinct();
-
-        let tag_id_mapping : BTreeMap<_, _> = tags::table
-            .filter(tags::dsl::id.eq(any(post_tag_ids)))
-            .load::<T::Tag>(conn)?
-            .into_iter()
-            .map(|t| (t.id, Arc::new(Tag {name : t.tag_name})))
-            .collect();
-        
-        let not_found = Arc::new(Tag{name: "<Tag not found>".to_string()});
-
-        Ok(sf.into_iter().zip(post_tag_info).map(|(p, ts)| Post {
-            title: p.title,
-            publish_time: p.publish_time,
-            intro: p.intro,
-            tags: ts.into_iter().map(|tt| {
-                tag_id_mapping.get(&tt.tag_id).map(Clone::clone).unwrap_or(not_found.clone()).clone()
-            }).collect()
-        }).collect())
-    }
-}
-
 impl Into<crate::web::models::comment::Comment> for Comment {
     fn into(self) -> crate::web::models::comment::Comment {
         crate::web::models::comment::Comment {

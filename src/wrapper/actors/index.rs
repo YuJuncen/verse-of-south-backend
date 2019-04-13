@@ -2,7 +2,6 @@ use crate::database::models::types::ArchiveInfo;
 use actix::prelude::*;
 use crate::wrapper::messages::*;
 use futures::future::*;
-use super::pgdatabase::PGDatabase;
 use crate::web::models::index_post::*;
 
 pub struct Index {
