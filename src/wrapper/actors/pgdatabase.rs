@@ -1,3 +1,4 @@
+use crate::web::handlers::types::Pagination;
 use diesel::prelude::*;
 use actix::prelude::*;
 use serde::ser::{ Serialize, Serializer};
@@ -13,7 +14,6 @@ use std::fmt;
 fn serialize_intostr<T: ToString, S: Serializer>(s: &T, ser: S) -> Result<S::Ok, S::Error>{
     s.to_string().serialize(ser)
 }
-
 
 #[fail(display = "when query, something wrong happens.")]
 #[derive(Fail, Debug, Serialize)]
@@ -41,24 +41,6 @@ impl PGDatabase {
     }
 }
 
-impl From<String> for DatabaseError {
-    fn from(s: String) -> Self {
-        DatabaseError::Because(s)
-    }
-}
-
-impl From<MailboxError> for DatabaseError {
-    fn from(mbe: MailboxError) -> Self {
-        DatabaseError::ActorSystemGoesWrong(mbe)
-    }
-}
-
-impl From<diesel::result::Error> for DatabaseError {
-    fn from(dbe: diesel::result::Error) -> Self {
-        DatabaseError::DieselGoesWrong(dbe)
-    }
-}
-
 impl Actor for PGDatabase {
     type Context = SyncContext<Self>;
     fn started(&mut self, _ctx: &mut Self::Context) {
@@ -66,69 +48,12 @@ impl Actor for PGDatabase {
     }
 }
 
-impl M::post::Post {
-    pub fn get_tags<C, Tr>(&self, conn: &C) -> Result<Vec<T::Tag>, DatabaseError> where 
-    C: Connection<TransactionManager=Tr, Backend=diesel::pg::Pg>,
-    Tr: diesel::connection::TransactionManager<C> {
-        use diesel::dsl::any;
-        use crate::schema::{ tags, tag_to };
-        use diesel::prelude::*;
-
-        let post_tag_ids = T::TagTo::belonging_to(self).select(tag_to::tag_id);
-
-        tags::table.filter(tags::id.eq(any(post_tag_ids)))
-            .load::<T::Tag>(conn)
-            .map_err(|e| e.into())
-    }
-
-    fn into_index_post(&self, conn: &PgConnection) -> Result<Post, DatabaseError> {
-        let ts = self.get_tags(conn)?;
-        Ok(Post {
-            title: self.title.clone(),
-            publish_time: self.publish_time.clone(),
-            intro: self.intro.clone(),
-            tags: ts.into_iter().map(|t| std::sync::Arc::new(Tag {name: t.tag_name})).collect()
-        })
-    }
-
-    fn batch_into_index_post(sf: Vec<Self>, conn: &PgConnection) -> Result<Vec<Post>, DatabaseError> {
-        use std::collections::BTreeMap;
-        use std::sync::Arc;
-        use crate::schema::{ tags, tag_to };
-        use diesel::dsl::any;
-        let post_tag_info = T::TagTo::belonging_to(&sf)
-            .load::<T::TagTo>(conn)?
-            .grouped_by(&sf);
-            
-        let post_tag_ids = T::TagTo::belonging_to(&sf)
-            .select(tag_to::dsl::tag_id)
-            .distinct();
-
-        let tag_id_mapping : BTreeMap<_, _> = tags::table
-            .filter(tags::dsl::id.eq(any(post_tag_ids)))
-            .load::<T::Tag>(conn)?
-            .into_iter()
-            .map(|t| (t.id, Arc::new(Tag {name : t.tag_name})))
-            .collect();
-        
-        let not_found = Arc::new(Tag{name: "<Tag not found>".to_string()});
-
-        Ok(sf.into_iter().zip(post_tag_info).map(|(p, ts)| Post {
-            title: p.title,
-            publish_time: p.publish_time,
-            intro: p.intro,
-            tags: ts.into_iter().map(|tt| {
-                tag_id_mapping.get(&tt.tag_id).map(Clone::clone).unwrap_or(not_found.clone()).clone()
-            }).collect()
-        }).collect())
-    }
-}
-
 impl Handler<GiveMePostOfPage> for PGDatabase {
     type Result = Result<Vec<Post>, DatabaseError>;
     fn handle(&mut self, msg: GiveMePostOfPage, _ctx: &mut Self::Context) -> Self::Result {
         use crate::schema::posts::dsl::*;
-        let ps = posts.limit(msg.page.limit)
+        let ps = posts
+            .limit(msg.page.limit.unwrap_or(i64::max_value()))
             .offset(msg.page.offset)
             .load::<M::post::Post>(&self.connection)?;
         M::post::Post::batch_into_index_post(ps, &self.connection)    
@@ -138,6 +63,7 @@ impl Handler<GiveMePostOfPage> for PGDatabase {
 impl Into<crate::web::models::comment::Comment> for Comment {
     fn into(self) -> crate::web::models::comment::Comment {
         crate::web::models::comment::Comment {
+                id: self.id,
                 reply_to: self.reply_to,
                 publish_time: self.publish_time,
                 publisher_name: self.publisher_name,
@@ -147,13 +73,11 @@ impl Into<crate::web::models::comment::Comment> for Comment {
     }
 }
 
-impl Handler<GiveMePostOfPageMatches> for PGDatabase {
-    type Result = Result<Vec<Post>, DatabaseError>;
-    fn handle(&mut self, msg: GiveMePostOfPageMatches, _ctx: &mut Self::Context) -> Self::Result {
-        use crate::database::models::post::Post as DPost;
-        use diesel::dsl::*;
+macro_rules! query_to_sql {
+    ($msg: ident) => {
+        {use diesel::dsl::*;
         use diesel::sql_types::{ BigInt, Text };
-        let mps = sql_query("
+        sql_query("
         SELECT * FROM posts P1 WHERE 
             NOT EXISTS
             ((SELECT tags.id FROM tags WHERE tag_name = ANY (string_to_array($1, ':')::text[]))
@@ -162,10 +86,19 @@ impl Handler<GiveMePostOfPageMatches> for PGDatabase {
         AND
             P1.title LIKE ALL ( string_to_array($2, ' ')::text[] )
         LIMIT $3 OFFSET $4")
-        .bind::<Text, String>(msg.tags.into_iter().map(|t| t.name).collect::<Vec<String>>().join(":"))
-        .bind::<Text, _>(msg.title.map(|t| t.trim().split(' ').map(|c| format!("%{}%", c)).collect::<Vec<_>>().join(" ")).unwrap_or_default())
-        .bind::<BigInt, _>(msg.page.limit as i64)
-        .bind::<BigInt, _>(msg.page.offset as i64);
+        .bind::<Text, String>($msg.tags.into_iter().map(|t| t.name).collect::<Vec<String>>().join(":"))
+        .bind::<Text, _>($msg.title.map(|t| t.trim().split(' ').map(|c| format!("%{}%", c)).collect::<Vec<_>>().join(" ")).unwrap_or_default())
+        .bind::<BigInt, _>($msg.page.limit.map(|i| i as i64).unwrap_or(i64::max_value()))
+        .bind::<BigInt, _>($msg.page.offset as i64)}
+    };
+}
+
+impl Handler<GiveMePostOfPageMatches> for PGDatabase {
+    type Result = Result<Vec<Post>, DatabaseError>;
+    fn handle(&mut self, msg: GiveMePostOfPageMatches, _ctx: &mut Self::Context) -> Self::Result {
+        use crate::database::models::post::Post as DPost;
+
+        let mps = query_to_sql!(msg);
         debug!("{:?}", diesel::debug_query::<diesel::pg::Pg, _>(&mps));
         let result = mps.load::<DPost>(&self.connection);
         debug!("{:?}", result);
@@ -229,7 +162,7 @@ impl Handler<GiveMeArchiveOf> for PGDatabase {
         ").bind::<Integer, _>(msg.year)
         .bind::<Integer, _>(msg.month)
         .bind::<BigInt, _>(msg.page.offset)
-        .bind::<BigInt, _>(msg.page.limit);
+        .bind::<BigInt, _>(msg.page.limit.unwrap_or(i64::max_value()));
         debug!("selecting archives by sql: {:?}", diesel::debug_query::<diesel::pg::Pg, _>(&posts));
         posts
             .load::<DPost>(&self.connection)
@@ -244,5 +177,29 @@ impl Handler<GiveMeAllTags> for PGDatabase {
         use crate::schema::tags::table;
         let tags = table.load::<T::Tag>(&self.connection)?;
         Ok(tags.into_iter().map(|t| Tag {name: t.tag_name}).collect())
+    }
+}
+
+impl Handler<GiveMePaginationOf<GiveMePostOfPageMatches>> for PGDatabase {
+    type Result = Result<Pagination, DatabaseError>;
+    fn handle(&mut self, msg: GiveMePaginationOf<GiveMePostOfPageMatches>, _ctx: &mut Self::Context) -> Self::Result {
+        use diesel::dsl::*;
+        use diesel::sql_types::{ Text };
+        let sql = sql_query("
+        SELECT * FROM posts P1 WHERE 
+            NOT EXISTS
+            ((SELECT tags.id FROM tags WHERE tag_name = ANY (string_to_array($1, ':')::text[]))
+            EXCEPT 
+            (SELECT tag_id FROM posts P2 INNER JOIN tag_to ON post_id = P2.id WHERE P1.id = P2.id))
+        AND
+            P1.title LIKE ALL ( string_to_array($2, ' ')::text[] )")
+        .bind::<Text, String>(msg.base_query.tags.into_iter().map(|t| t.name).collect::<Vec<String>>().join(":"))
+        .bind::<Text, _>(msg.base_query.title.map(|t| t.trim().split(' ').map(|c| format!("%{}%", c)).collect::<Vec<_>>().join(" ")).unwrap_or_default());
+        let count = self.connection.execute_returning_count(&sql)?;
+        Ok(Pagination::new(
+            msg.base_query.page.offset,
+            count,
+            msg.base_query.page.limit,
+        ))
     }
 }

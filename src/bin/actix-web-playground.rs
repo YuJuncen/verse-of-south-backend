@@ -31,12 +31,14 @@ impl Actor for RootActor {
                             .resource("/{year}/{month}", |r| r.get().with_async(query_archives))
                     })
                 })
-                .resource("/post/{id}", |r| r.get().with_async(get_post_by_id))
-                .resource("/comment", |r| {
-                    r.middleware(CommentFilter {});
-                    r.method(http::Method::POST)
-                    .with_async(comment_to)
-                })
+                .scope("/post", |s| 
+                    s.resource("/tag", |r| r.get().with_async(get_all_tags))
+                    .resource("/comment", |r| {
+                        r.middleware(CommentFilter {});
+                        r.method(http::Method::POST)
+                         .with_async(comment_to)})
+                         .resource("/{id}", |r| r.get().with_async(get_post_by_id))
+                )
                 .finish()      
         }).bind("127.0.0.1:8000")
         .expect("Failed to bind.")
@@ -49,7 +51,7 @@ fn hello_async(_req: HttpRequest<AppState>) -> impl Future<Item=Result<String, E
 }
 
 fn main() {
-    ::std::env::set_var("RUST_LOG", "debug");
+    // ::std::env::set_var("RUST_LOG", "info");
     env_logger::init();
     let sys = actix::System::new("verse-of-south");
     let _ = RootActor {}.start();

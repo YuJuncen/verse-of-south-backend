@@ -2,15 +2,7 @@ use actix_web::*;
 use futures::future::*;
 use crate::web::AppState;
 use crate::wrapper::messages::*;
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct NewComment {
-    pub comment: String,
-    pub publisher_name: String,
-    pub publisher_email: Option<String>,
-    pub to: i32,
-    pub reply_to: Option<i32>
-}
+use super::types::*;
 
 
 pub fn comment_to((req, comment): (HttpRequest<AppState>, Json<NewComment>)) -> impl Future<Item=HttpResponse, Error=Error> {

@@ -13,14 +13,11 @@ pub mod middlewares {
     use super::errors::Unauthorized;
     pub struct CommentFilter;
     impl <S> Middleware<S> for CommentFilter {
-        fn start(&self, _req: &HttpRequest<S>) -> Result<Started> {
-            Ok(Started::Done)
-        }
 
-        fn response(&self, req: &HttpRequest<S>, resp: HttpResponse) -> Result<middleware::Response> {
+        fn start(&self, req: &HttpRequest<S>) -> Result<Started> {
             let auth = req.headers().get(http::header::AUTHORIZATION);
             match auth {
-                Some(_) => Ok(middleware::Response::Done(resp)),
+                Some(_) => Ok(Started::Done),
                 None => Err(Unauthorized{}.into())
             }
         }

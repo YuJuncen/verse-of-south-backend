@@ -12,7 +12,7 @@ fn main() {
         println!("{:?}", p);
         ok(())
     }).map_err(|_| ()));
-    Arbiter::spawn(db.send(GiveMeArchiveOf {page: PageInfo {offset: 0, limit: 999}, month: 7, year: 2019}).map(|e| println!("{:?}", e))
+    Arbiter::spawn(db.send(GiveMeArchiveOf {page: PageInfo {offset: 0, limit: None}, month: 7, year: 2019}).map(|e| println!("{:?}", e))
         .map_err(|_| ()));
     sys.run();
 }

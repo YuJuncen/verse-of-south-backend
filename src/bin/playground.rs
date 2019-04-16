@@ -1,6 +1,5 @@
 #[allow(unused_imports)]
 use vos::database::models::post::{ NewPost, Post };
-use vos::database::models::tag::TagTo;
 use vos::database::models::types::FormatType;
 use vos::database;
 use chrono::prelude::*;

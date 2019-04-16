@@ -8,6 +8,7 @@ pub use crate::database::models::types::FormatType;
 
 
 #[derive(Serialize, Debug)]
+#[serde(rename_all="camelCase")]
 pub struct DetailedPost {
     #[serde(flatten)]
     pub base: Post,
