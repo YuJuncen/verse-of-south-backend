@@ -51,7 +51,7 @@ fn hello_async(_req: HttpRequest<AppState>) -> impl Future<Item=Result<String, E
 }
 
 fn main() {
-    // ::std::env::set_var("RUST_LOG", "info");
+    ::std::env::set_var("RUST_LOG", "debug");
     env_logger::init();
     let sys = actix::System::new("verse-of-south");
     let _ = RootActor {}.start();

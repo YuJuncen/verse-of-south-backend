@@ -11,6 +11,7 @@ extern crate serde_json;
 extern crate actix;
 extern crate dotenv;
 extern crate env_logger;
+extern crate crypto;
 
 pub mod database;
 pub mod web;

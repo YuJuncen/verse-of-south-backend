@@ -62,13 +62,24 @@ impl Handler<GiveMePostOfPage> for PGDatabase {
 
 impl Into<crate::web::models::comment::Comment> for Comment {
     fn into(self) -> crate::web::models::comment::Comment {
+        use crypto::md5::Md5;
+        use crypto::digest::Digest;
+        let mut hasher = Md5::new();
+        let mut hashed_email = [0u8; 16];
+        debug!("Hashing Email address :: origin: {:?}", self.publisher_email);
+        let email_addr = self.publisher_email.map(|e| {
+            hasher.input(e.as_bytes());
+            hasher.result(&mut hashed_email);
+            debug!("Hashed Email address :: {:?}", hashed_email);
+            hashed_email.iter().map(|d| format!["{:x}", d]).collect()
+        });
         crate::web::models::comment::Comment {
                 id: self.id,
                 reply_to: self.reply_to,
                 publish_time: self.publish_time,
                 publisher_name: self.publisher_name,
                 content: self.content,
-                publisher_email: self.publisher_email
+                publisher_email: email_addr
         }
     }
 }
@@ -129,7 +140,17 @@ impl Handler<CommentToPost> for PGDatabase {
     type Result = Result<crate::web::models::comment::Comment, DatabaseError>;
     fn handle(&mut self, msg: CommentToPost, _ctx: &mut Self::Context) -> Self::Result {
         use crate::schema::comments::dsl::*;
-        let comment_to_post = NewComment::new(&msg.content, &msg.publisher, msg.publisher_email.as_ref().map(|s| s.as_str()), msg.to, msg.reply_to);
+        let comment_to_post = NewComment::new(
+            // 在数据库附近这样做真的好吗？
+            // 鉴定是否出问题的责任完全到前端去了。
+            // 但是 actix 似乎要求静态的消息；
+            // 也就是说，似乎没办法把这个消息中的字符串给换成 &str。
+            // 也许 Arc 真的是几乎唯一的解决方案了……
+            // 但是这样重构的话很不容易。
+            &msg.content[..], 
+            &msg.publisher[..], 
+            msg.publisher_email.as_ref().map(|s| &s.as_str()[..]), 
+            msg.to, msg.reply_to);
         diesel::insert_into(comments)
             .values(comment_to_post)
             .get_result::<Comment>(&self.connection)
