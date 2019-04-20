@@ -5,7 +5,7 @@ authors = ["hillium <maruruku@stu.csust.edu.cn>"]
 edition = "2018"
 
 [dependencies]
-actix-web = "0.7"
+actix-web = { version = "0.7", features = ["ssl"] }
 actix = "0.7.9"
 diesel = { version = "1.4", features = ["postgres", "chrono"]}
 tokio = "0.1"
@@ -19,3 +19,4 @@ env_logger = "0.5"
 log = "0.4.6"
 failure = "0.1.5"
 rust-crypto = "^0.2"
+openssl = "0.10"
