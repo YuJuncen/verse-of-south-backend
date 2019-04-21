@@ -12,27 +12,38 @@ use actix::prelude::*;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
+    env::set_var("RUST_LOG", "debug");
+    env_logger::init();
     actix::run(|| {
         let ssl_conn = SslConnector::builder(SslMethod::tls()).unwrap().build();
-        let client_conn = client::ClientConnector::with_connector(ssl_conn).start();
+        let conn = client::ClientConnector::with_connector(ssl_conn).start();    
+        /*        
         client::post("https://www.recaptcha.net/recaptcha/api/siteverify")
-        .with_connector(client_conn)
+        .set_header(http::header::ACCEPT, "application/json")
+        .with_connector(conn)
         .timeout(std::time::Duration::from_secs(10))
         .form(json!({
-            "secret": args[1],
-            "response": args[2]
+            "secret": args.get(1),
+            "response": args.get(2)
         }))
         .map(|req| {
             println!("REQUEST: {:?} WITH ARGS: {:?}", req, args);
             req
-        })
+        })*/
+        client::post(args.get(1).unwrap())
+        .with_connector(conn)
+        .form(json!({
+            "secret": args.get(2),
+            "response": args.get(3)
+        }))
         .unwrap()
         .send()
         .map_err(|e| println!("failed: {:?}", e))
-        .and_then(|r| r.json::<Value>().and_then(|i| {
-            println!("SUCCESS: {:?}", i);
-            Ok(())
-        }).map_err(|e| println!("FAILED: {:?}", e)))
-        .map_err(|e| println!("FAILED: {:?}", e))
+        .map(|r| {
+            println!("RECEIVED: {:?}", r);
+            r
+        })
+        .and_then(|r| r.json::<Value>().map(|i| println!("BODY: {:?}", i)).map_err(|e| println!("Error: {:?}", e)))
+        .map_err(|_| ())
     })
 }

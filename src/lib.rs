@@ -6,8 +6,9 @@ extern crate serde_derive;
 extern crate log;
 #[macro_use]
 extern crate failure;
-extern crate futures;
+#[macro_use]
 extern crate serde_json;
+extern crate futures;
 extern crate actix;
 extern crate dotenv;
 extern crate env_logger;

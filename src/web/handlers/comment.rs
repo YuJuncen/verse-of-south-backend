@@ -6,9 +6,12 @@ use super::types::*;
 
 
 pub fn comment_to((req, comment): (HttpRequest<AppState>, Json<NewComment>)) -> impl Future<Item=HttpResponse, Error=Error> {
-    req.state().database.send::<CommentToPost>(comment.into_inner().into())
+    let r = comment.into_inner().into();
+    debug!("HANDLER GET COMMENT: {:?}", r);
+    req.state().database.send::<CommentToPost>(r)
         .map(|c| c.unwrap())
-        .map(|c| HttpResponse::Created()
-            .json(c))
+        .map(|c| {
+            HttpResponse::Created().json(c)
+        })
         .from_err()
 }
