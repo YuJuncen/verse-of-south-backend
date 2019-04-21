@@ -24,7 +24,7 @@ impl Actor for RootActor {
             let app = App::with_state(AppState {database: db.clone()})
                 .middleware(middleware::Logger::default())
                 .prefix("/resources")
-                .resource("/", |r| r.get().with_async(hello_async))
+                .resource("/", |r| r.get().with_async(pot))
                 .scope("/index", |s| {
                     s.resource("", |r| r.get().with_async(get_by_page))
                     .resource("/query", |r| r.get().with_async(get_by_pred))
@@ -52,8 +52,8 @@ impl Actor for RootActor {
     }
 }
 
-fn hello_async(_req: HttpRequest<AppState>) -> impl Future<Item=Result<String, Error>, Error = Error> {
-    ok(Ok(String::from("Hello, this is ‘promise’ for you.")))
+fn pot<T>(_req: HttpRequest<T>) -> impl Future<Item=HttpResponse, Error=Error>{
+    ok(HttpResponse::build(http::StatusCode::IM_A_TEAPOT).body("may be short and stout"))
 }
 
 fn main() {

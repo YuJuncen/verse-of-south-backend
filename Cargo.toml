@@ -5,8 +5,8 @@ authors = ["hillium <maruruku@stu.csust.edu.cn>"]
 edition = "2018"
 
 [dependencies]
-actix-web = { version = "0.7", features = ["ssl"] }
-actix = "0.7.9"
+actix-web = { version = "^0.7", features = ["ssl"] }
+actix = "0.7"
 diesel = { version = "1.4", features = ["postgres", "chrono"]}
 tokio = "0.1"
 futures = "0.1"
