@@ -11,22 +11,23 @@
 ## 启动！
 你可以使用交互式的配置脚本 EnvGen 来产生 .env 文件，也可以手动设置他们：
 ``` bash
-# 自动设置
+# 使用 ghci 解释运行……
 ghci EnvGen.hs
 *Main> main
 # ...
 
-# 用 ghc 编译之后运行
+# 或者，用 ghc 编译之后运行
 ghc -O2 EnvGen.hs
 ./EnvGen
 # ...
 ```
 
-| 名字 | 作用 |
-| DATABASE_URL | 数据库 URL；您可以参考 diesel 的文档获得格式。 |
-| DISABLE_RECAPTCHA | 禁用 RECAPTCHA，这个环境变量在今后大概率会被取消。 |
-| ENABLE_CORS | 启用跨站资源引用，这能让前端和后端在不同 URL 的时候（开发环境或者多机计算的时候居多）浏览器前端脚本的 ajax 正常运行。 |
-| RECAPTCHA_SECRET | recaptcha 的服务器密钥。 |
+|  名字  |  作用  |  
+| ------- | ------ |
+| DATABASE_URL | 数据库 URL；您可以参考 diesel 的文档获得格式。 |  
+| DISABLE_RECAPTCHA | 禁用 RECAPTCHA，这个环境变量在今后大概率会被取消。 |  
+| ENABLE_CORS | 启用跨站资源引用，这能让前端和后端在不同 URL 的时候（开发环境或者多机计算的时候居多）浏览器前端脚本的 ajax 正常运行。 |  
+| RECAPTCHA_SECRET | recaptcha 的服务器密钥。 |  
 
 然后安装 diesel-cli：  
 ```bash
