@@ -1,0 +1,5 @@
+FROM cargo
+COPY . /vos
+WORKDIR /vos
+RUN cargo build --bin vos --release
+CMD /target/release/vos
