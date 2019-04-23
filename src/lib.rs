@@ -13,6 +13,7 @@ extern crate actix;
 extern crate dotenv;
 extern crate env_logger;
 extern crate crypto;
+extern crate clap;
 
 pub mod database;
 pub mod web;

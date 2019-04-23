@@ -68,7 +68,7 @@ impl Into<crate::web::models::comment::Comment> for Comment {
         let mut hashed_email = [0u8; 16];
         debug!("Hashing Email address :: origin: {:?}", self.publisher_email);
         let email_addr = self.publisher_email.map(|e| {
-            hasher.input(e.as_bytes());
+            hasher.input(e.to_lowercase().as_bytes());
             hasher.result(&mut hashed_email);
             debug!("Hashed Email address :: {:?}", hashed_email);
             hashed_email.iter().map(|d| format!["{:x}", d]).collect()

@@ -1,22 +1,37 @@
+use std::net::ToSocketAddrs;
 use ::actix::prelude::*;
 use actix_web::*;
 use actix_web::middleware::cors::Cors;
-use vos::web::handlers::post::*;
-use vos::web::handlers::comment::*;
-use vos::web::handlers::index::*;
-use vos::wrapper::actors::pgdatabase::PGDatabase;
-use vos::database::establish_connection;
-use vos::web::AppState;
-use vos::web::middlewares::*;
+use crate::web::handlers::post::*;
+use crate::web::handlers::comment::*;
+use crate::web::handlers::index::*;
+use crate::wrapper::actors::pgdatabase::PGDatabase;
+use crate::database::establish_connection;
+use crate::web::AppState;
+use crate::web::middlewares::*;
 use openssl::ssl::{ SslConnector, SslMethod };
 use futures::future::*;
+use std::net::{Ipv4Addr, SocketAddrV4};
 
-struct RootActor;
-impl Actor for RootActor {
+pub struct RootActor<T> {
+    listen_to: T
+}
+
+impl RootActor<SocketAddrV4> {
+    pub fn listen_to_localhost(port: u16) -> Self {
+        RootActor {listen_to : SocketAddrV4::new(Ipv4Addr::LOCALHOST, port)}
+    }
+
+    pub fn listen_to_all_network(port: u16) -> Self {
+        RootActor {listen_to : SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, port) }
+    }
+}
+
+
+impl<T: ToSocketAddrs + Clone + 'static> Actor for RootActor<T> {
     type Context = Context<Self>;
 
     fn started(&mut self, _ctx: &mut Self::Context) {
-        let args : Vec<String> = std::env::args().collect();
         let db = SyncArbiter::start(8, || PGDatabase::new(establish_connection()) );
         server::new(move || {
             let ssl_conn = SslConnector::builder(SslMethod::tls()).unwrap().build();
@@ -40,26 +55,22 @@ impl Actor for RootActor {
                             r.middleware(CommentFilter(conn, std::env::var("RECAPTCHA_SECRET").expect("No recaptcha secret got! You can set env DISABLE_RECAPTCHA or RECAPTCHA_SECRET.")));
                         }
                         r.method(http::Method::POST)
-                         .with_async(comment_to)})
-                         .resource("/{id}", |r| r.get().with_async(get_post_by_id))
+                         .with_async_config(comment_to, |conf| {
+                             (conf.0).1.limit(4096);
+                         })
+                        })
+                    .resource("/{id}", |r| r.get().with_async(get_post_by_id))
                 );
                 if std::env::var("ENABLE_CORS").is_ok() {
                     app.middleware(Cors::default())
                 } else { app }.finish()
-        }).bind("127.0.0.1:8000")
+        }).bind(self.listen_to.clone())
         .expect("Failed to bind.")
         .start();
     }
-}
 
+
+}
 fn pot<T>(_req: HttpRequest<T>) -> impl Future<Item=HttpResponse, Error=Error>{
     ok(HttpResponse::build(http::StatusCode::IM_A_TEAPOT).body("may be short and stout"))
-}
-
-fn main() {
-    ::std::env::set_var("RUST_LOG", "debug");
-    env_logger::init();
-    let sys = actix::System::new("verse-of-south");
-    let _ = RootActor {}.start();
-    sys.run();
 }

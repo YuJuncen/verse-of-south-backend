@@ -1,6 +1,6 @@
 [package]
 name = "vos"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["hillium <maruruku@stu.csust.edu.cn>"]
 edition = "2018"
 
@@ -20,3 +20,4 @@ log = "0.4.6"
 failure = "0.1.5"
 rust-crypto = "^0.2"
 openssl = "0.10"
+clap = "2.33.0"
