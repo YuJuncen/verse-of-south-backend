@@ -31,7 +31,7 @@ ghc -O2 EnvGen.hs
 
 然后安装 diesel-cli：  
 ```bash
-cargo install diesel-cli
+cargo install diesel_cli
 ```
 接着就可以创建模式了：
 ```bash
@@ -41,7 +41,17 @@ diesel migration run
 ```bash
 diesel migration redo
 ```
-使用 `diesel setup` 来生成 schema 模块。 
+使用 `diesel setup` 来生成 schema 模块。   
+然后就可以编译启动了：
+```
+cargo build --bin vos --release
+./target/release/vos run
+```
+在制作完成管理节点（可能会考虑 `vert.x` 一类的技术栈。）之前，可以先使用这个工具来上传文档：
+```
+vos post add [info...]
+vos tag add [info...]
+```
 
 # 最后要什么？
 **读者**在首页阅读**文章**的简介。
