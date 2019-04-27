@@ -1,15 +1,17 @@
 version: "3.7"
 services:
+  db:
+    image: 'postgres'
+    environment:
+      POSTGRES_PASSWORD: 123456
+
   web: 
     build: 
       context: .
     ports:
       - 8000:8000
     environment:
-      - DATABASE_URL=postgres://postgres:123456@localhost/postgres
-      - DISABLE_RECAPTCHA=true
-
-  postgre:
-    image: 'postgres:11.2'
-    environment:
-      POSTGRES_PASSWORD: 123456
+      - DATABASE_URL=postgres://postgres:123456@db/postgres
+      - DISABLE_RECAPTCHA
+    depends_on:
+      - db
