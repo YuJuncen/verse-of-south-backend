@@ -1,10 +1,7 @@
-FROM alpine
-RUN apk update && apk add cargo
+FROM rust
 COPY . /vos
 WORKDIR /vos
-RUN apk add libssl1.1
-RUN apk add openssl-dev
-RUN apk add libpq-dev
-RUN cargo update
-RUN cargo build --bin vos --release
-CMD /target/release/vos
+RUN cargo install --path .
+RUN cargo install diesel_cli
+RUN diesel migration run 
+CMD target/release/vos
