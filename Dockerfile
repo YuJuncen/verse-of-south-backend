@@ -3,5 +3,4 @@ COPY . /vos
 WORKDIR /vos
 RUN cargo install --path .
 RUN cargo install diesel_cli
-RUN diesel migration run 
-CMD target/release/vos
+CMD diesel migration run && target/release/vos run --listen-to-all-network --port 8000

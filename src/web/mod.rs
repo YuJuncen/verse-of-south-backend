@@ -75,8 +75,8 @@ pub mod middlewares {
                         RecaptchaError::RecaptchaServerBadResponse
                     })
                     .and_then(|jres| {
-                    debug!("GET RESULT FROM GOOGLE: {:?}", jres);
-                    if jres.success { ok(()) } else {err(RecaptchaError::FailedToVeryify)}
+                        debug!("GET RESULT FROM GOOGLE: {:?}", jres);
+                        if jres.success { ok(()) } else {err(RecaptchaError::FailedToVeryify)}
                 })})
             .map(|_| None)
             .from_err())
