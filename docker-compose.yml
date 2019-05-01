@@ -10,10 +10,14 @@ services:
     command: diesel migration run && vos run --listen-to-all-network --port 8000
     build: 
       context: .
-    ports:
-      - 8000:8000
     environment:
       DATABASE_URL: postgres://postgres:123456@db/postgres
       DISABLE_RECAPTCHA: t 
     depends_on:
       - db
+
+  nginx:
+    image: 'nginx'
+    ports: 1234:80
+    volumes:
+      - ${pwd}/deploy/nginx.conf:/etc/nginx/nginx.conf:ro
