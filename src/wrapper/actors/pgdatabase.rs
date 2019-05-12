@@ -55,6 +55,7 @@ impl Handler<GiveMePostOfPage> for PGDatabase {
         let ps = posts
             .limit(msg.page.limit.unwrap_or(i64::max_value()))
             .offset(msg.page.offset)
+            .order_by(publish_time.desc())
             .load::<M::post::Post>(&self.connection)?;
         M::post::Post::batch_into_index_post(ps, &self.connection)    
     }
@@ -96,6 +97,7 @@ macro_rules! query_to_sql {
             (SELECT tag_id FROM posts P2 INNER JOIN tag_to ON post_id = P2.id WHERE P1.id = P2.id))
         AND
             P1.title LIKE ALL ( string_to_array($2, ' ')::text[] )
+        ORDER BY publish_time DESC
         LIMIT $3 OFFSET $4")
         .bind::<Text, String>($msg.tags.into_iter().map(|t| t.name).collect::<Vec<String>>().join(":"))
         .bind::<Text, _>($msg.title.map(|t| t.trim().split(' ').map(|c| format!("%{}%", c)).collect::<Vec<_>>().join(" ")).unwrap_or_default())
@@ -179,6 +181,7 @@ impl Handler<GiveMeArchiveOf> for PGDatabase {
         use diesel::sql_types::{BigInt, Integer};
         let posts = diesel::sql_query("
         SELECT * FROM posts WHERE EXTRACT(YEAR FROM publish_time) = $1 AND EXTRACT(MONTH FROM publish_time) = $2
+            ORDER BY publish_time DESC
             OFFSET $3 LIMIT $4;
         ").bind::<Integer, _>(msg.year)
         .bind::<Integer, _>(msg.month)
