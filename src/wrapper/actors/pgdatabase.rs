@@ -72,7 +72,7 @@ impl Into<crate::web::models::comment::Comment> for Comment {
             hasher.input(e.to_lowercase().as_bytes());
             hasher.result(&mut hashed_email);
             debug!("Hashed Email address :: {:?}", hashed_email);
-            hashed_email.iter().map(|d| format!["{:x}", d]).collect()
+            hashed_email.iter().map(|d| format!["{:0>2x}", d]).collect()
         });
         crate::web::models::comment::Comment {
                 id: self.id,
